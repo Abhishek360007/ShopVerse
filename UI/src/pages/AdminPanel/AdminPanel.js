@@ -79,7 +79,7 @@ const ordersProvider = {
   update: async (resource, { id, data }) => ({
     data: (await httpClient(`${API}/orders/${id}`, {
       method: 'PUT',
-      body: JSON.stringify({ orderStatus: data?.orderStatus }),
+      body: JSON.stringify({ orderStatus: data?.orderStatus, trackingNumber: data?.trackingNumber ?? '', note: data?.note ?? '' }),
     })).json,
   }),
 };
@@ -107,6 +107,17 @@ const adminLightTheme = {
     background: { default: '#f8f7fc', paper: '#ffffff' },
   },
   typography: { ...defaultLightTheme.typography, fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif' },
+  components: {
+    ...defaultLightTheme.components,
+    // A clean white top bar instead of the default coloured one
+    MuiAppBar: {
+      ...defaultLightTheme.components?.MuiAppBar,
+      styleOverrides: {
+        colorSecondary: { backgroundColor: '#ffffff', color: '#14121f', borderBottom: '1px solid rgba(20,18,31,0.08)' },
+      },
+      defaultProps: { elevation: 0 },
+    },
+  },
 };
 
 const adminTheme = {
@@ -122,8 +133,8 @@ const adminTheme = {
 };
 
 export const AdminPanel = () => {
-  const fetchStats = useCallback(async () => (await httpClient(`${API}/orders/stats`)).json, []);
-  const AdminDashboard = useCallback(() => <Dashboard fetchStats={fetchStats} />, [fetchStats]);
+  const fetchAnalytics = useCallback(async (months) => (await httpClient(`${API}/orders/analytics?months=${months}`)).json, []);
+  const AdminDashboard = useCallback(() => <Dashboard fetchAnalytics={fetchAnalytics} />, [fetchAnalytics]);
 
   return (
     <Admin dataProvider={dataProvider} basename='/admin' theme={adminLightTheme} darkTheme={adminTheme}

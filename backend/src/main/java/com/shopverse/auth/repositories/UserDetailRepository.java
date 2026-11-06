@@ -7,4 +7,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserDetailRepository extends JpaRepository<User,Long> {
     User findByEmail(String username);
+
+    long countByCreatedOnGreaterThanEqual(java.util.Date since);
 }

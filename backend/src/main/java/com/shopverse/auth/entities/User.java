@@ -35,6 +35,17 @@ public class User implements UserDetails {
 
     private Date updatedOn;
 
+    @PrePersist
+    protected void onCreate() {
+        createdOn = new Date();
+        updatedOn = createdOn;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedOn = new Date();
+    }
+
     @Column(nullable = false,unique = true)
     private String email;
 
