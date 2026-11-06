@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { selectCartItems } from '../../store/features/cart';
@@ -21,6 +21,7 @@ const Checkout = () => {
   const [addingAddress, setAddingAddress] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState(stripeEnabled ? 'CARD' : 'COD');
   const [error, setError] = useState('');
+  const orderPlaced = useRef(false);
   const total = cartTotal(cartItems);
   const addresses = useMemo(() => userInfo?.addressList ?? [], [userInfo?.addressList]);
 
@@ -36,13 +37,16 @@ const Checkout = () => {
     if (!addressId && addresses.length) setAddressId(addresses[0].id);
   }, [addresses, addressId]);
 
-  if (!cartItems.length) return <Navigate to="/cart-items" replace />;
+  // An empty cart means nothing to check out, unless we just placed the order and are moving to the confirmation
+  if (!cartItems.length && !orderPlaced.current) return <Navigate to="/cart-items" replace />;
 
   const placeCodOrder = () => {
+    if (orderPlaced.current) return;
     setError('');
     dispatch(setLoading(true));
     placeOrderAPI(createOrderRequest(cartItems, userInfo?.id, addressId, 'COD'))
       .then(res => {
+        orderPlaced.current = true;
         navigate(`/orderConfirmed?orderId=${res?.orderId}&method=cod`, { replace: true });
         dispatch(clearCart());
       })

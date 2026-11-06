@@ -1,67 +1,271 @@
 {
 	"info": {
-		"_postman_id": "6b9bdf25-7740-4ed9-a5ea-3151b435d53b",
-		"name": "ShopVerse",
+		"_postman_id": "c1c8d0f5-7979-43bc-b4cc-f95619d7f0a8",
+		"name": "ShopVerse API",
+		"description": "REST API for ShopVerse. Set baseUrl (local: http://localhost:8080), log in, and the token variables fill themselves.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080"
+		},
+		{
+			"key": "token",
+			"value": ""
+		},
+		{
+			"key": "adminToken",
+			"value": ""
+		},
+		{
+			"key": "productId",
+			"value": ""
+		},
+		{
+			"key": "variantId",
+			"value": ""
+		},
+		{
+			"key": "addressId",
+			"value": ""
+		},
+		{
+			"key": "orderId",
+			"value": ""
+		}
+	],
 	"item": [
 		{
-			"name": "products",
+			"name": "Auth",
 			"item": [
 				{
-					"name": "Get All Products",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{endPoint}}/api/products",
-							"host": [
-								"{{endPoint}}"
-							],
-							"path": [
-								"api",
-								"products"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Add Product",
+					"name": "Register",
 					"request": {
 						"method": "POST",
-						"header": [],
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						},
+						"description": "",
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"name\": \"Women's Skinny Jeans\",\r\n    \"slug\": \"womens-skinny-jeans-d821c40a\",\r\n    \"description\": \"Trendy women's skinny jeans for a stylish look\",\r\n    \"price\": 59.99,\r\n    \"brand\": \"ChicStyle\",\r\n    \"categoryId\": \"9a2bb8e0-d8dc-4332-b914-ceb4095b3640\",\r\n    \"categoryTypeId\": \"200557d7-9d51-4a2b-b2fb-b664913108c5\",\r\n    \"rating\": 4.8,\r\n    \"thumbnail\": \"https://codedev.b-cdn.net/products/jeans-blue.jpeg\",\r\n    \"variants\": [\r\n      { \"color\": \"Blue\", \"size\": \"S\", \"stockQuantity\": 1 },\r\n      { \"color\": \"Blue\", \"size\": \"M\", \"stockQuantity\": 1 },\r\n      { \"color\": \"Blue\", \"size\": \"L\", \"stockQuantity\": 1 }\r\n    ],\r\n    \"productResources\": [\r\n      {\r\n        \"name\": \"jeans-blue1.jpg\",\r\n        \"url\": \"https://codedev.b-cdn.net/products/jeans-blue1.jpg\",\r\n        \"type\": \"image\",\r\n        \"isPrimary\": true\r\n      },\r\n      {\r\n        \"name\": \"jeans-blue2.jpg\",\r\n        \"url\": \"https://codedev.b-cdn.net/products/jeans-blue2.jpg\",\r\n        \"type\": \"image\",\r\n        \"isPrimary\": false\r\n      }\r\n    ],\r\n    \"newArrival\": true\r\n  }",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
+							"raw": "{\n  \"firstName\": \"Asha\",\n  \"lastName\": \"Rao\",\n  \"email\": \"asha@example.com\",\n  \"password\": \"Password123\",\n  \"phoneNumber\": \"9876543210\"\n}"
+						}
+					}
+				},
+				{
+					"name": "Verify email code",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
 							}
-						},
+						],
 						"url": {
-							"raw": "{{endPoint}}/api/products",
+							"raw": "{{baseUrl}}/api/auth/verify",
 							"host": [
-								"{{endPoint}}"
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"verify"
+							]
+						},
+						"description": "Only needed when EMAIL_VERIFICATION=true.",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userName\": \"asha@example.com\",\n  \"code\": \"123456\"\n}"
+						}
+					}
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						},
+						"description": "",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userName\": \"asha@example.com\",\n  \"password\": \"Password123\"\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const data = pm.response.json();",
+									"if (data.token) pm.collectionVariables.set('token', data.token);"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Login as admin",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Use the account whose email is ADMIN_EMAIL.",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userName\": \"admin@example.com\",\n  \"password\": \"Password123\"\n}"
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const data = pm.response.json();",
+									"if (data.token) pm.collectionVariables.set('adminToken', data.token);"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "My profile",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/user/profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"profile"
+							]
+						},
+						"description": "",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Catalog",
+			"item": [
+				{
+					"name": "Categories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/category",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"category"
+							]
+						},
+						"description": ""
+					}
+				},
+				{
+					"name": "All products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/products",
+							"host": [
+								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"products"
 							]
-						}
+						},
+						"description": ""
 					},
-					"response": []
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const data = pm.response.json();",
+									"if (data.length) { pm.collectionVariables.set('productId', data[0].id); pm.collectionVariables.set('variantId', data[0].variants[0].id); }"
+								]
+							}
+						}
+					]
 				},
 				{
-					"name": "Get Product By Id",
+					"name": "Search products",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{endPoint}}/api/products?productId=",
+							"raw": "{{baseUrl}}/api/products?q=shoes",
 							"host": [
-								"{{endPoint}}"
+								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
@@ -69,324 +273,596 @@
 							],
 							"query": [
 								{
-									"key": "productId",
-									"value": ""
+									"key": "q",
+									"value": "shoes"
 								}
 							]
-						}
-					},
-					"response": []
+						},
+						"description": ""
+					}
 				},
 				{
-					"name": "Update Product",
+					"name": "Product by slug",
 					"request": {
-						"method": "PUT",
+						"method": "GET",
 						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "[\r\n    {\r\n        \"id\": \"3bb694c1-86dd-4df8-b016-1da5f4de5ae7\",\r\n        \"name\": \"Purple Hoodie\",\r\n        \"description\": \"A cozy purple hoodie for women\",\r\n        \"price\": 69.99,\r\n        \"brand\": \"Nike\",\r\n        \"rating\": 4.6,\r\n        \"categoryId\": \"9a2bb8e0-d8dc-4332-b914-ceb4095b3640\",\r\n        \"thumbnail\": \"https://codedev.b-cdn.net/products/hoodie-purple.jpg\",\r\n        \"slug\": \"purple-hoodie-32d0f257\",\r\n        \"categoryName\": null,\r\n        \"categoryTypeId\": \"1b5bce66-604a-489f-a7d3-487ad1760302\",\r\n        \"categoryTypeName\": null,\r\n        \"variants\": [\r\n            {\r\n                \"id\": \"9aea7f38-3d2b-4757-beee-8186e8c6aa7b\",\r\n                \"color\": \"Purple\",\r\n                \"size\": \"S\",\r\n                \"stockQuantity\": 1\r\n            },\r\n            {\r\n                \"id\": \"19cb261e-a5b0-4ba7-8f11-61897545713e\",\r\n                \"color\": \"Purple\",\r\n                \"size\": \"M\",\r\n                \"stockQuantity\": 1\r\n            },\r\n            {\r\n                \"id\": \"bf2eb3d4-332b-4368-b898-c20eba98a01e\",\r\n                \"color\": \"Purple\",\r\n                \"size\": \"L\",\r\n                \"stockQuantity\": 1\r\n            }\r\n        ],\r\n        \"productResources\": [\r\n            {\r\n                \"id\": \"c5521c92-5e93-4f88-bf72-abd7a5089236\",\r\n                \"name\": \"hoodie-purple1.jpg\",\r\n                \"url\": \"https://codedev.b-cdn.net/products/hoodie-purple.jpg\",\r\n                \"type\": \"image\",\r\n                \"isPrimary\": true\r\n            },\r\n            {\r\n                \"id\": \"60a9fa55-283a-45f3-a9ac-a6f018f6e2e3\",\r\n                \"name\": \"hoodie-purple2.jpg\",\r\n                \"url\": \"https://codedev.b-cdn.net/products/hoodie-purple.jpg\",\r\n                \"type\": \"image\",\r\n                \"isPrimary\": false\r\n            }\r\n        ],\r\n        \"newArrival\": false\r\n    }\r\n]",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
 						"url": {
-							"raw": "{{endPoint}}/api/products",
+							"raw": "{{baseUrl}}/api/products?slug=velocity-pro-running-shoes",
 							"host": [
-								"{{endPoint}}"
+								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"products"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "categories",
-			"item": [
-				{
-					"name": "Create Category",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{endPoint}}/api/category",
-							"host": [
-								"{{endPoint}}"
 							],
-							"path": [
-								"api",
-								"category"
+							"query": [
+								{
+									"key": "slug",
+									"value": "velocity-pro-running-shoes"
+								}
 							]
-						}
-					},
-					"response": []
+						},
+						"description": ""
+					}
 				},
 				{
-					"name": "GetAll Categories",
+					"name": "Product by id",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{endPoint}}/api/category",
+							"raw": "{{baseUrl}}/api/products/{{productId}}",
 							"host": [
-								"{{endPoint}}"
+								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"category"
+								"products",
+								"{{productId}}"
 							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update Category",
-					"request": {
-						"method": "PUT",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": " {\r\n        \"id\": \"eae057e4-46df-4c08-bc74-26be357690eb\",\r\n        \"categoryTypes\": [\r\n            {\r\n                \"id\": \"37d62cce-0558-4879-8a9f-830b7b9c5841\",\r\n                \"name\": \"Jeans\",\r\n                \"code\": \"JEANS\",\r\n                \"description\": \"Men's jeans\"\r\n            }\r\n        ]\r\n    }",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
 						},
+						"description": ""
+					}
+				}
+			]
+		},
+		{
+			"name": "Wishlist",
+			"item": [
+				{
+					"name": "My wishlist",
+					"request": {
+						"method": "GET",
+						"header": [],
 						"url": {
-							"raw": "{{endPoint}}/api/category/12",
+							"raw": "{{baseUrl}}/api/wishlist",
 							"host": [
-								"{{endPoint}}"
+								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"category",
-								"12"
+								"wishlist"
+							]
+						},
+						"description": "",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
 							]
 						}
-					},
-					"response": []
+					}
 				},
 				{
-					"name": "Delete",
+					"name": "Add product",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/wishlist/{{productId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"wishlist",
+								"{{productId}}"
+							]
+						},
+						"description": "",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Remove product",
 					"request": {
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{endPoint}}/api/category/",
+							"raw": "{{baseUrl}}/api/wishlist/{{productId}}",
 							"host": [
-								"{{endPoint}}"
+								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"category",
-								""
+								"wishlist",
+								"{{productId}}"
 							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "orders",
-			"item": [
-				{
-					"name": "Create Order",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{endPoint}}/api/order",
-							"host": [
-								"{{endPoint}}"
-							],
-							"path": [
-								"api",
-								"order"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Order by User",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "cart",
-			"item": []
-		},
-		{
-			"name": "auth",
-			"item": [
-				{
-					"name": "Register User",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n  \"firstName\": \"John\",\r\n  \"lastName\": \"Doe\",\r\n  \"password\": \"password\",\r\n  \"email\": \"john.doe@shopverse.com\",\r\n  \"phoneNumber\": \"\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
 						},
-						"url": {
-							"raw": "{{endPoint}}/api/auth/register",
-							"host": [
-								"{{endPoint}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"register"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Login",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				},
-				{
-					"name": "Verify Code",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				},
-				{
-					"name": "{{endPoint}}/api/auth/login",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"userName\":\"john.doe@shopverse.com\",\r\n    \"password\":\"password\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{endPoint}}/api/auth/login",
-							"host": [
-								"{{endPoint}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"login"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "user",
-			"item": [
-				{
-					"name": "User info",
-					"request": {
+						"description": "",
 						"auth": {
 							"type": "bearer",
 							"bearer": [
 								{
 									"key": "token",
-									"value": "eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJhdXRoYXBwIiwic3ViIjoicGFyZGVlcC5rQHNob3BlYXNlLmNvbSIsImlhdCI6MTcyNzY0Mzg2NiwiZXhwIjoxNzI3NjQ3NDY2fQ.5ZycgMAa1bb33ZfKaoy7NrMlqdwwPRtNrvcl6955_Ls",
+									"value": "{{token}}",
 									"type": "string"
 								}
 							]
-						},
-						"method": "GET",
-						"header": [],
+						}
+					}
+				},
+				{
+					"name": "Merge guest wishlist",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
 						"url": {
-							"raw": "{{endPoint}}/api/user/profile",
+							"raw": "{{baseUrl}}/api/wishlist/merge",
 							"host": [
-								"{{endPoint}}"
+								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"user",
-								"profile"
+								"wishlist",
+								"merge"
 							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "address",
-					"request": {
+						},
+						"description": "Items saved while signed out are added after sign-in.",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"productIds\": [\n    \"{{productId}}\"\n  ]\n}"
+						},
 						"auth": {
 							"type": "bearer",
 							"bearer": [
 								{
 									"key": "token",
-									"value": "eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJhdXRoYXBwIiwic3ViIjoiY29kZXJldmVhbC5hcHBAZ21haWwuY29tIiwiaWF0IjoxNzI3NDM5MTY5LCJleHAiOjE3Mjc0NDI3Njl9.WGfFG92VmI8PSv85kwfWBDY42Y6R-HUzXT1n19oe_k4",
+									"value": "{{token}}",
 									"type": "string"
 								}
 							]
-						},
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Checkout & orders",
+			"item": [
+				{
+					"name": "Add address",
+					"request": {
 						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n  \"street\": \"#2001 New Modern Enclave\",\r\n  \"city\": \"Gurgaon\",\r\n  \"state\": \"Haryana\",\r\n  \"zipCode\": \"123001\",\r\n  \"phoneNumber\": \"9999000090\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
 							}
-						},
+						],
 						"url": {
-							"raw": "{{endPoint}}/api/address",
+							"raw": "{{baseUrl}}/api/address",
 							"host": [
-								"{{endPoint}}"
+								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"address"
 							]
+						},
+						"description": "",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Asha Rao\",\n  \"phoneNumber\": \"9876543210\",\n  \"street\": \"12 MG Road\",\n  \"city\": \"Bengaluru\",\n  \"state\": \"Karnataka\",\n  \"zipCode\": \"560001\"\n}"
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
 						}
 					},
-					"response": []
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const data = pm.response.json();",
+									"if (data.id) pm.collectionVariables.set('addressId', data.id);"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Place order (cash on delivery)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/order",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"order"
+							]
+						},
+						"description": "The server prices the order from the catalog; any total sent by the client is ignored.",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"addressId\": \"{{addressId}}\",\n  \"paymentMethod\": \"COD\",\n  \"orderItemRequests\": [\n    {\n      \"productId\": \"{{productId}}\",\n      \"productVariantId\": \"{{variantId}}\",\n      \"quantity\": 1\n    }\n  ]\n}"
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const data = pm.response.json();",
+									"if (data.orderId) pm.collectionVariables.set('orderId', data.orderId);"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "My orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/order/user",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"order",
+								"user"
+							]
+						},
+						"description": "",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Track an order",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/order/{{orderId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"order",
+								"{{orderId}}"
+							]
+						},
+						"description": "Includes the timestamped status history.",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Cancel order",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/order/cancel/{{orderId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"order",
+								"cancel",
+								"{{orderId}}"
+							]
+						},
+						"description": "Allowed until the order ships.",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						}
+					}
 				}
 			]
 		},
 		{
-			"name": "file",
+			"name": "Admin",
 			"item": [
 				{
-					"name": "Upload File",
+					"name": "Analytics",
 					"request": {
 						"method": "GET",
-						"header": []
-					},
-					"response": []
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/orders/analytics?months=6&lowStockThreshold=5",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"analytics"
+							],
+							"query": [
+								{
+									"key": "months",
+									"value": "6"
+								},
+								{
+									"key": "lowStockThreshold",
+									"value": "5"
+								}
+							]
+						},
+						"description": "",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "All orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/orders?page=0&size=25",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"orders"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "25"
+								}
+							]
+						},
+						"description": "",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Orders by status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/orders?status=PENDING",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"orders"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "PENDING"
+								}
+							]
+						},
+						"description": "",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Order details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/orders/{{orderId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"{{orderId}}"
+							]
+						},
+						"description": "",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Update order status",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/orders/{{orderId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"{{orderId}}"
+							]
+						},
+						"description": "Statuses: PENDING, CONFIRMED, PACKED, SHIPPED, OUT_FOR_DELIVERY, DELIVERED, CANCELLED.",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"orderStatus\": \"SHIPPED\",\n  \"trackingNumber\": \"DTDC-88412\",\n  \"note\": \"Handed to the courier\"\n}"
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create category",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/category",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"category"
+							]
+						},
+						"description": "",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Toys\",\n  \"code\": \"TOYS\",\n  \"description\": \"Toys and games\",\n  \"categoryTypes\": [\n    {\n      \"name\": \"Puzzles\",\n      \"code\": \"PUZZLES\",\n      \"description\": \"Puzzles\"\n    }\n  ]\n}"
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
 				}
 			]
 		}
