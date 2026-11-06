@@ -1,13 +1,6 @@
-# Render Blueprint: deploys the whole ShopVerse stack.
+# Render Blueprint: deploys the ShopVerse API and storefront.
+# The database is hosted for free on Neon (neon.tech); Render asks for its details.
 # Render dashboard -> New -> Blueprint -> pick this repo. See README "Deploy to Render".
-
-databases:
-  - name: shopverse-db
-    plan: free
-    region: singapore
-    databaseName: shopverse
-    user: shopverse
-    ipAllowList: []            # only Render services can connect
 
 services:
   # Spring Boot API
@@ -20,16 +13,19 @@ services:
     dockerfilePath: ./backend/Dockerfile
     healthCheckPath: /api/category
     envVars:
+      # Neon database: copy these from Neon -> your project -> Connect
       - key: DB_HOST
-        fromDatabase: { name: shopverse-db, property: host }
-      - key: DB_PORT
-        fromDatabase: { name: shopverse-db, property: port }
+        sync: false            # e.g. ep-cool-name-123456.ap-southeast-1.aws.neon.tech
       - key: DB_NAME
-        fromDatabase: { name: shopverse-db, property: database }
+        sync: false            # e.g. neondb
       - key: DB_USER
-        fromDatabase: { name: shopverse-db, property: user }
+        sync: false            # e.g. neondb_owner
       - key: DB_PASSWORD
-        fromDatabase: { name: shopverse-db, property: password }
+        sync: false
+      - key: DB_PORT
+        value: "5432"
+      - key: DB_SSLMODE
+        value: require         # Neon only accepts encrypted connections
       - key: FRONTEND_URL
         fromService: { name: shopverse-web, type: web, property: host }
       - key: JWT_KEY

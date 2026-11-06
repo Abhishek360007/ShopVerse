@@ -93,6 +93,7 @@ Set these environment variables. `backend/.env.example` lists them:
 | ------------------------------ | ------------------------------------ |
 | `DB_HOST`                      | PostgreSQL host                      |
 | `DB_PORT` / `DB_NAME`          | Port (default `5432`) and database name (default `shopverse`) |
+| `DB_SSLMODE`                   | `prefer` (default) locally, `require` for hosted databases like Neon |
 | `DB_USER` / `DB_PASSWORD`      | Database credentials                 |
 | `MAIL_USERNAME`                | Gmail address used to send emails    |
 | `MAIL_PASSWORD`                | Gmail app password                   |
@@ -141,19 +142,24 @@ npm start
 
 The app opens at `http://localhost:3000`.
 
-## ☁️ Deploy to Render
+## ☁️ Deploy (free): Neon + Render
 
-The repo includes a [Render Blueprint](render.yaml) that creates the database, the API and the storefront.
+The database runs on [Neon](https://neon.tech) (free PostgreSQL, no expiry) and the API and storefront run on [Render](https://render.com) using the included [Blueprint](render.yaml).
 
-1. Sign in at [render.com](https://render.com) with your GitHub account.
+**1. Create the database on Neon**
+1. Sign in at [neon.tech](https://neon.tech) and create a project (region: Singapore / `ap-southeast-1`).
+2. Click **Connect** and note the **host**, **database**, **user** and **password**.
+
+**2. Deploy on Render**
+1. Sign in at [render.com](https://render.com) with GitHub.
 2. Click **New → Blueprint** and select the **ShopVerse** repository.
-3. When asked for `ADMIN_EMAIL`, enter the email you will use as the store admin, then click **Apply**.
-4. Wait for all three services to go live (the first build takes about 10 minutes).
+3. Fill in `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` (from Neon) and `ADMIN_EMAIL` (your admin email), then click **Apply**.
+4. Wait for **shopverse-api** and **shopverse-web** to go live (the first build takes about 10 minutes).
 5. Open the **shopverse-web** URL, sign up with your `ADMIN_EMAIL`, and you'll see **Manage store** on your account page.
 
-On the free plan the API sleeps after 15 minutes without visitors, so the first page load after a break can take about a minute. Free Render databases expire after 30 days unless you upgrade.
+The tables and starter catalog are created automatically on first start. On Render's free plan the API sleeps after 15 minutes without visitors, so the first page load after a break can take about a minute.
 
-Card payments, Google sign-in, emails and image uploads are off by default. To turn one on, replace its `not-configured` values in the **shopverse-api → Environment** settings (for Google sign-in, also set `REACT_APP_GOOGLE_LOGIN=true` on **shopverse-web**; for card payments, set `REACT_APP_STRIPE_KEY`).
+Card payments, Google sign-in, emails and image uploads are off by default. To turn one on, replace its `not-configured` values in **shopverse-api → Environment** (for Google sign-in, also set `REACT_APP_GOOGLE_LOGIN=true` on **shopverse-web**; for card payments, set `REACT_APP_STRIPE_KEY`).
 
 ## 🧪 Testing
 
