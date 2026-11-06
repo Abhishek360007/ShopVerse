@@ -15,7 +15,10 @@ const Navigation = ({variant="default"}) => {
     <nav className='flex items-center py-6 px-16 justify-between gap-20 custom-nav'>
       <div className='flex items-center gap-6'>
         {/* Logo */}
-        <a className='text-3xl text-black font-bold gap-8' href='/'>ShopVerse</a>
+        <a className='flex items-center gap-3 text-3xl text-black font-bold' href='/'>
+          <img src='/logo192.png' alt='' className='w-10 h-10' />
+          ShopVerse
+        </a>
       </div>
       { variant ==="default" &&
       <div className='flex flex-wrap items-center gap-10'>
