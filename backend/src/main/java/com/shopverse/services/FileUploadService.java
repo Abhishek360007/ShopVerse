@@ -7,6 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 
 @Service
@@ -25,7 +26,7 @@ public class FileUploadService {
 
         try {
            String urlString =  fileHostName+"/"+storageZone+"/"+fileName;
-            URL url = new URL(urlString);
+            URL url = URI.create(urlString).toURL();
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("PUT");
             connection.setRequestProperty("AccessKey",fileUploadKey);
