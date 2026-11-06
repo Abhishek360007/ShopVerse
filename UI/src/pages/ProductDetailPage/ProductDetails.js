@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useLoaderData, useParams } from 'react-router-dom'
+import { Link, useLoaderData } from 'react-router-dom'
 import Breadcrumb from '../../components/Breadcrumb/Breadcrumb';
-import content from '../../data/content.json'
 import Rating from '../../components/Rating/Rating';
 import SizeFilter from '../../components/Filters/SizeFilter';
 import ProductColors from './ProductColors';
@@ -42,7 +41,6 @@ const ProductDetails = () => {
   const [image, setImage] = useState();
   const [breadCrumbLinks, setBreadCrumbLink] = useState([]);
   const dispatch = useDispatch();
-  const cartItems = useSelector((state) => state.cartState?.cart);
   const [similarProduct,setSimilarProducts] = useState([]);
   const categories = useSelector((state)=> state?.categoryState?.categories);
   const [selecteSize,setSelectedSize] = useState('');

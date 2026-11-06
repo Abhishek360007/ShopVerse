@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrayField, Datagrid, List, TextField } from "react-admin";
+import { Datagrid, List, TextField } from "react-admin";
 
 const CategoryList = () => {
   return (

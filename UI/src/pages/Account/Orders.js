@@ -27,11 +27,12 @@ const Orders = () => {
 
   useEffect(()=>{
     const displayOrders=[];
-    allOrders?.map(order=>{
+    allOrders?.forEach(order=>{
 
       displayOrders.push({
         id:order?.id,
         orderDate:order?.orderDate,
+        expectedDeliveryDate:order?.expectedDeliveryDate,
         orderStatus: order?.orderStatus,
         status:(order?.orderStatus === 'PENDING' || order?.orderStatus === 'IN_PROGRESS' || order?.orderStatus === 'SHIPPED')? 'ACTIVE': order?.orderStatus === 'DELIVERED' ? 'COMPLETED':order?.orderStatus,
         items:order?.orderItemList?.map(orderItem=>{
@@ -87,7 +88,7 @@ const Orders = () => {
                   <div className='flex justify-between mt-2'>
                     <div className='flex flex-col text-gray-500 text-sm'>
                       <p>Order Date : {moment(order?.orderDate).format('MMMM DD YYYY')}</p>
-                      <p>Expected Delivery Date: {moment(order?.orderDate).add(3,'days').format('MMMM DD YYYY')}</p>
+                      <p>Expected Delivery Date: {moment(order?.expectedDeliveryDate || moment(order?.orderDate).add(3,'days')).format('MMMM DD YYYY')}</p>
                     </div>
                     <div className='flex flex-col text-gray-500 text-sm'>
                       <p>Order Status : {order?.orderStatus}</p>

@@ -5,6 +5,7 @@ import com.shopverse.auth.entities.User;
 import com.shopverse.auth.services.OAuth2Service;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -25,6 +26,9 @@ public class OAuth2Controller {
     @Autowired
     private JWTTokenHelper jwtTokenHelper;
 
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
+
     @GetMapping("/success")
     public void callbackOAuth2(@AuthenticationPrincipal OAuth2User oAuth2User, HttpServletResponse response) throws IOException {
 
@@ -36,7 +40,7 @@ public class OAuth2Controller {
 
         String token = jwtTokenHelper.generateToken(user.getUsername());
 
-        response.sendRedirect("http://localhost:3000/oauth2/callback?token="+token);
+        response.sendRedirect(frontendUrl + "/oauth2/callback?token=" + token);
 
     }
 }

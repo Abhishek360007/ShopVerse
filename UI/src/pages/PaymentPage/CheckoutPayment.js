@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import {AddressElement, CardElement, PaymentElement, ShippingAddressElement, useElements, useStripe} from '@stripe/react-stripe-js';
+import { PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { placeOrderAPI } from '../../api/order';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectCartItems } from '../../store/features/cart';
@@ -13,19 +13,16 @@ const CheckoutForm = ({userId,addressId}) => {
   const cartItems = useSelector(selectCartItems);
   const dispatch = useDispatch();
   const [error,setError] =useState('');
-  const [paymentSuccess,setPaymentSuccess] = useState(false);
-  const [orderResponse,setOrderResponse] = useState();
 
 
   const handleSubmit = useCallback(async (event)=>{
 
     event?.preventDefault();
+    if (!stripe || !elements) return;
 
     const orderRequest = createOrderRequest(cartItems,userId,addressId);
-    console.log("Order Request",orderRequest);
     dispatch(setLoading(true));
     setError('');
-    setOrderResponse({});
 
     const {error} = await elements.submit();
     if (error?.message) {
@@ -35,30 +32,26 @@ const CheckoutForm = ({userId,addressId}) => {
     }
 
     
-    if(elements){
-    placeOrderAPI(orderRequest).then(async res=>{
-        setOrderResponse(res);
-        stripe.confirmPayment({
+    placeOrderAPI(orderRequest).then(res=>{
+        return stripe.confirmPayment({
             elements,
             clientSecret: res?.credentials?.client_secret,
             
             confirmParams:{
                 payment_method:'pm_card_visa',
-                return_url:'http://localhost:3000/confirmPayment'
+                return_url:`${window.location.origin}/confirmPayment`
             }
-        }).then(res=>{
-            console.log("Response ",res);
+        }).then(result=>{
+            if (result?.error?.message) setError(result.error.message);
         })
 
         
         
-    }).catch(err=>{
-
+    }).catch(()=>{
+        setError('Unable to place your order. Please try again.');
     }).finally(()=>{
         dispatch(setLoading(false));
     })
-
-    }
 
 
   },[addressId, cartItems, dispatch, elements, stripe, userId]);

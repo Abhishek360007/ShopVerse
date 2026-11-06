@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 
 export const NumberInput = ({quantity,max=1,min=1,onChangeQuantity}) => {
 
@@ -14,7 +14,7 @@ export const NumberInput = ({quantity,max=1,min=1,onChangeQuantity}) => {
   },[]);
 
   const displayMinQuantity = useCallback(()=>{
-    setMessage(`Atleat ${min} item should be required`);
+    setMessage(`At least ${min} item is required`);
 
     setTimeout(()=>{
         setMessage('')

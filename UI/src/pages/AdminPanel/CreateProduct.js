@@ -1,5 +1,5 @@
 import React from 'react'
-import { ArrayInput, BooleanInput, Create, ImageField, ImageInput, NumberInput, ReferenceInput, required, SelectField, SelectInput, SimpleForm, SimpleFormIterator, TextInput } from 'react-admin'
+import { ArrayInput, BooleanInput, Create, ImageField, ImageInput, NumberInput, ReferenceInput, required, SelectInput, SimpleForm, SimpleFormIterator, TextInput } from 'react-admin'
 import CategoryTypeInput from './Category/CategoryTypeInput';
 import { colorSelector } from '../../components/Filters/ColorsFilter';
 

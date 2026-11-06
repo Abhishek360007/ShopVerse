@@ -1,11 +1,7 @@
 import { Elements } from '@stripe/react-stripe-js';
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import CheckoutForm from './CheckoutPayment';
 import { loadStripe } from '@stripe/stripe-js';
-import { useDispatch, useSelector } from 'react-redux';
-import { setLoading } from '../../store/features/common';
-import { fetchUserDetails } from '../../api/userInfo';
-import { selectCartItems } from '../../store/features/cart';
 
 const stripePublishableKey = process.env.REACT_APP_STRIPE_KEY || process.env.STRIPE_KEY || '';
 //Publishable Key

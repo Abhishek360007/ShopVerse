@@ -7,6 +7,7 @@ import CreateProduct from './CreateProduct';
 import CategoryList from './Category/CategoryList';
 import CategoryEdit from './Category/CategoryEdit';
 import { fileUploadAPI } from '../../api/fileUpload';
+import { API_BASE_URL } from '../../api/constant';
 
 const CDN_URL = process.env.REACT_APP_CDN_URL || 'https://codedev.b-cdn.net';
 
@@ -18,11 +19,10 @@ const httpClient = (url,options={})=>{
   return fetchUtils.fetchJson(url,options);
 }
 
-const dataProvider = withLifecycleCallbacks(simpleRestProvider('http://localhost:8080/api',httpClient),[
+const dataProvider = withLifecycleCallbacks(simpleRestProvider(`${API_BASE_URL}/api`,httpClient),[
   {
     resource:"products",
     beforeSave: async (params,dataProvider) =>{
-      console.log("Params ",params);
       let requestBody = {
         ...params
       }
@@ -32,7 +32,7 @@ const dataProvider = withLifecycleCallbacks(simpleRestProvider('http://localhost
       formData.append("file",params?.thumbnail?.rawFile);
       formData.append("fileName",fileName);
 
-      const thumbnailResponse = await fileUploadAPI(formData);
+      await fileUploadAPI(formData);
       requestBody.thumbnail = CDN_URL+"/"+fileName;
 
     
@@ -41,18 +41,16 @@ const dataProvider = withLifecycleCallbacks(simpleRestProvider('http://localhost
         const formData = new FormData();
         formData.append("file",productResource?.url?.rawFile);
         formData.append("fileName",fileName);
-        const fileUploadRes = await fileUploadAPI(formData);
+        await fileUploadAPI(formData);
         return {
           ...productResource,
           url:CDN_URL+"/"+fileName,
         };
       }));
-      //console.log("Params ",params,fileName);
       const request = {
         ...requestBody,
         productResources:newProductResList
       }
-      console.log("Request Body ",request);
       return request;
     }
   }

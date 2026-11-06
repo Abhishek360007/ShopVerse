@@ -21,9 +21,6 @@ const ProductListPage = ({categoryType}) => {
     return categories?.find((category)=> category.code === categoryType);
   },[categoryType]);
   
-  const productListItems = useMemo(()=>{
-    return content?.products?.filter((product)=> product?.category_id === categoryContent?.id );
-  },[categoryContent]);
 
   const category = useMemo(()=>{
     return categoryData?.find(element => element?.code === categoryType);

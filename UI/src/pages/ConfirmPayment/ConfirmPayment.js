@@ -1,4 +1,3 @@
-import { useStripe } from '@stripe/react-stripe-js';
 import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { confirmPaymentAPI } from '../../api/order';
@@ -19,7 +18,6 @@ const ConfirmPayment = () => {
     useEffect(()=>{
 
         const query = new URLSearchParams(location.search);
-        const clientSecret = query.get('payment_intent_client_secret');
         const redirectStatus = query.get('redirect_status');
         const paymentIntent = query.get('payment_intent');
         if(redirectStatus === 'succeeded'){
@@ -27,7 +25,7 @@ const ConfirmPayment = () => {
             dispatch(clearCart());
             confirmPaymentAPI({
                 paymentIntent: paymentIntent,
-                status:paymentIntent
+                status:redirectStatus
             }).then(res=>{
                 const orderId = res?.orderId;
                 navigate(`/orderConfirmed?orderId=${orderId}`)
@@ -48,7 +46,9 @@ const ConfirmPayment = () => {
   
   return (
     <>
-    <div>Processing Payment...</div>
+    {errorMessage
+      ? <div className='p-8 text-red-600'>{errorMessage}</div>
+      : <div className='p-8'>Processing Payment...</div>}
     {isLoading && <Spinner />}
     </>
   )

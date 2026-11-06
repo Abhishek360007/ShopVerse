@@ -1,5 +1,7 @@
 
 
+const DELIVERY_DAYS = 5;
+
 export const createOrderRequest = (cartItems,userId,addressId)=>{
     let request = {};
     request.userId= userId;
@@ -7,7 +9,7 @@ export const createOrderRequest = (cartItems,userId,addressId)=>{
     request.orderDate = new Date().toISOString();
     let orderItems = [];
     let amount = 0;
-    cartItems?.map((item)=>{
+    cartItems?.forEach((item)=>{
         amount += item?.subTotal; 
         orderItems.push({
             productId: item.productId,
@@ -20,7 +22,9 @@ export const createOrderRequest = (cartItems,userId,addressId)=>{
     request.totalAmount =  amount?.toFixed(2);
     request.discount = 0;
     request.paymentMethod= "CARD";
-    request.expectedDeliveryDate = "2024-10-05T21:11:46.202Z";
+    const deliveryDate = new Date();
+    deliveryDate.setDate(deliveryDate.getDate() + DELIVERY_DAYS);
+    request.expectedDeliveryDate = deliveryDate.toISOString();
     request.currency = "usd";
     return request;
 

@@ -1,6 +1,5 @@
 import React, { useCallback, useState } from 'react'
 import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
 import { setLoading } from '../../store/features/common';
 import { verifyAPI } from '../../api/authentication';
 

@@ -1,13 +1,11 @@
-import React, { useCallback, useEffect } from "react";
-import { logOut } from "../../utils/jwt-helper";
-import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Link, NavLink, Outlet } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { setLoading } from "../../store/features/common";
 import { fetchUserDetails } from "../../api/userInfo";
 import { loadUserInfo, selectIsUserAdmin, selectUserInfo } from "../../store/features/user";
 
 const Account = () => {
-  const navigate = useNavigate();
   const dispatch = useDispatch();
   const userInfo = useSelector(selectUserInfo);
   const isUserAdmin = useSelector(selectIsUserAdmin);
@@ -22,7 +20,7 @@ const Account = () => {
       .finally(() => {
         dispatch(setLoading(false));
       });
-  }, []);
+  }, [dispatch]);
 
  
   return (
@@ -33,7 +31,7 @@ const Account = () => {
           <p className="text-xl font-bold">Hello {userInfo?.firstName}</p>
           <p>Welcome to your account</p>
           <div className="md:flex mt-4">
-            <ul className="lex-column space-y space-y-4 text-sm font-medium text-gray-500 dark:text-gray-400 md:me-4 mb-4 md:mb-0">
+            <ul className="flex-column space-y-4 text-sm font-medium text-gray-500 dark:text-gray-400 md:me-4 mb-4 md:mb-0">
               <li>
                 <NavLink
                   to={"/account-details/profile"}
