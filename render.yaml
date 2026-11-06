@@ -1,0 +1,82 @@
+# Render Blueprint: deploys the whole ShopVerse stack.
+# Render dashboard -> New -> Blueprint -> pick this repo. See README "Deploy to Render".
+
+databases:
+  - name: shopverse-db
+    plan: free
+    region: singapore
+    databaseName: shopverse
+    user: shopverse
+    ipAllowList: []            # only Render services can connect
+
+services:
+  # Spring Boot API
+  - type: web
+    name: shopverse-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    healthCheckPath: /api/category
+    envVars:
+      - key: DB_HOST
+        fromDatabase: { name: shopverse-db, property: host }
+      - key: DB_PORT
+        fromDatabase: { name: shopverse-db, property: port }
+      - key: DB_NAME
+        fromDatabase: { name: shopverse-db, property: database }
+      - key: DB_USER
+        fromDatabase: { name: shopverse-db, property: user }
+      - key: DB_PASSWORD
+        fromDatabase: { name: shopverse-db, property: password }
+      - key: FRONTEND_URL
+        fromService: { name: shopverse-web, type: web, property: host }
+      - key: JWT_KEY
+        generateValue: true    # random secret, created once
+      - key: ADMIN_EMAIL
+        sync: false            # Render asks you for this: the email that becomes store admin
+      - key: EMAIL_VERIFICATION
+        value: "false"         # no mail server yet; set to true after adding MAIL_* below
+      - key: JAVA_TOOL_OPTIONS
+        value: "-XX:MaxRAMPercentage=75"
+      # Optional integrations: replace these in the Render dashboard when you set them up
+      - key: STRIPE_SECRET
+        value: not-configured
+      - key: MAIL_USERNAME
+        value: not-configured
+      - key: MAIL_PASSWORD
+        value: not-configured
+      - key: GOOGLE_OAUTH2_CLIENT_ID
+        value: not-configured
+      - key: GOOGLE_OAUTH2_CLIENT_SECRET
+        value: not-configured
+      - key: FILE_ZONE
+        value: not-configured
+      - key: CDN_KEY
+        value: not-configured
+      - key: CDN_HOST
+        value: not-configured
+
+  # React storefront
+  - type: web
+    name: shopverse-web
+    runtime: static
+    rootDir: UI
+    buildCommand: npm ci --no-audit --no-fund && npm run build
+    staticPublishPath: build
+    routes:
+      - type: rewrite          # let React Router handle page URLs
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: GENERATE_SOURCEMAP
+        value: "false"
+      - key: REACT_APP_API_BASE_URL
+        fromService: { name: shopverse-api, type: web, property: host }
+      - key: REACT_APP_GOOGLE_LOGIN
+        value: "false"
+      - key: REACT_APP_STRIPE_KEY
+        value: ""

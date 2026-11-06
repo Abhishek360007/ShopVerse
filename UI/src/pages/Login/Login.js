@@ -58,9 +58,6 @@ const Login = () => {
         <button type="submit" className="btn-primary w-full">Sign in</button>
       </form>
 
-      <div className="my-5 flex items-center gap-3 text-xs text-muted">
-        <span className="h-px flex-1 bg-line" /> OR <span className="h-px flex-1 bg-line" />
-      </div>
       <GoogleSignIn />
 
       <p className="mt-6 text-center text-sm text-muted">

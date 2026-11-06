@@ -28,7 +28,7 @@ public class CorsConfig {
     public FilterRegistrationBean<CorsFilter> corsFilterRegistration() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(Arrays.stream(allowedOrigins.split(","))
-                .map(String::trim).filter(origin -> !origin.isEmpty()).toList());
+                .map(String::trim).filter(origin -> !origin.isEmpty()).map(Urls::withScheme).toList());
         config.setAllowedHeaders(List.of("Origin", "Content-Type", "Accept", "Authorization", "Range", "Content-Range"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setExposedHeaders(List.of("Content-Range", "X-Total-Count"));

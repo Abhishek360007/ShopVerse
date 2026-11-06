@@ -3,6 +3,7 @@ package com.shopverse.auth.controller;
 import com.shopverse.auth.config.JWTTokenHelper;
 import com.shopverse.auth.entities.User;
 import com.shopverse.auth.services.OAuth2Service;
+import com.shopverse.config.Urls;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,7 +41,7 @@ public class OAuth2Controller {
 
         String token = jwtTokenHelper.generateToken(user.getUsername());
 
-        response.sendRedirect(frontendUrl + "/oauth2/callback?token=" + token);
+        response.sendRedirect(Urls.withScheme(frontendUrl) + "/oauth2/callback?token=" + token);
 
     }
 }

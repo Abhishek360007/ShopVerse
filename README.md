@@ -131,6 +131,7 @@ Optionally create `UI/.env` from `UI/.env.example`:
 | `REACT_APP_API_BASE_URL`  | Backend URL (default `http://localhost:8080`)  |
 | `REACT_APP_STRIPE_KEY`    | Stripe publishable key                         |
 | `REACT_APP_CDN_URL`       | Base URL for uploaded product images           |
+| `REACT_APP_GOOGLE_LOGIN`  | Set to `true` to show “Continue with Google”   |
 
 ```bash
 cd UI
@@ -139,6 +140,20 @@ npm start
 ```
 
 The app opens at `http://localhost:3000`.
+
+## ☁️ Deploy to Render
+
+The repo includes a [Render Blueprint](render.yaml) that creates the database, the API and the storefront.
+
+1. Sign in at [render.com](https://render.com) with your GitHub account.
+2. Click **New → Blueprint** and select the **ShopVerse** repository.
+3. When asked for `ADMIN_EMAIL`, enter the email you will use as the store admin, then click **Apply**.
+4. Wait for all three services to go live (the first build takes about 10 minutes).
+5. Open the **shopverse-web** URL, sign up with your `ADMIN_EMAIL`, and you'll see **Manage store** on your account page.
+
+On the free plan the API sleeps after 15 minutes without visitors, so the first page load after a break can take about a minute. Free Render databases expire after 30 days unless you upgrade.
+
+Card payments, Google sign-in, emails and image uploads are off by default. To turn one on, replace its `not-configured` values in the **shopverse-api → Environment** settings (for Google sign-in, also set `REACT_APP_GOOGLE_LOGIN=true` on **shopverse-web**; for card payments, set `REACT_APP_STRIPE_KEY`).
 
 ## 🧪 Testing
 

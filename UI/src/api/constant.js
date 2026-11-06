@@ -6,7 +6,10 @@ export const API_URLS = {
     GET_CATEGORY: (id) => `/api/category/${id}`,
 }
 
-export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
+// Hosting platforms may give just a host name (e.g. shopverse-api.onrender.com); add https:// when missing
+const withScheme = (url) => (/^https?:\/\//.test(url) ? url : `https://${url}`);
+
+export const API_BASE_URL = withScheme(process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080').replace(/\/$/, '');
 
 
 export const getHeaders = ()=>{
