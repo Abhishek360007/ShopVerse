@@ -4,6 +4,7 @@ import cartReducer from './features/cart';
 import categoryReducer from './features/category';
 import commonReducer from './features/common';
 import userReducer from './features/user';
+import wishlistReducer from './features/wishlist';
 
 const rootReducer = combineReducers({
     productState: productReducer,
@@ -11,6 +12,7 @@ const rootReducer = combineReducers({
     categoryState: categoryReducer,
     commonState:commonReducer,
     userState:userReducer,
+    wishlistState: wishlistReducer,
 })
 
 const store = configureStore({

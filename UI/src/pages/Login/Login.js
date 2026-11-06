@@ -6,6 +6,7 @@ import { setLoading } from '../../store/features/common'
 import { loginAPI } from '../../api/authentication';
 import { saveToken } from '../../utils/jwt-helper';
 import { safeRedirect } from '../../utils/redirect';
+import { syncWishlistAfterLogin } from '../../store/actions/wishlistAction';
 
 
 const Login = () => {
@@ -25,6 +26,7 @@ const Login = () => {
     loginAPI(values).then(res => {
       if (res?.token) {
         saveToken(res.token);
+        dispatch(syncWishlistAfterLogin());
         navigate(redirect, { replace: true });
       } else {
         setError('Something went wrong. Please try again.');

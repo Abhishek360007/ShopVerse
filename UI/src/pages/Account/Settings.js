@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { logOut } from '../../utils/jwt-helper';
 import { loadUserInfo } from '../../store/features/user';
+import { clearWishlistOnLogout } from '../../store/actions/wishlistAction';
 import { LogoutIcon } from '../../components/common/Icons';
 
 const Settings = () => {
@@ -12,6 +13,7 @@ const Settings = () => {
   const onLogOut = () => {
     logOut();
     dispatch(loadUserInfo({}));
+    dispatch(clearWishlistOnLogout());
     navigate("/");
   };
 

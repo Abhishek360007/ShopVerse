@@ -15,9 +15,11 @@ ShopVerse is a full-stack e-commerce web application built with **React.js** on 
 - 🔐 Sign-up (optional email verification), login, JWT authentication and Google OAuth2 sign-in
 - 💳 Checkout with saved addresses, Stripe card payments or cash on delivery
 - 🧾 Order totals calculated on the server from catalog prices
-- 📜 Order history with a status timeline, cancellation and account settings
-- 📊 Admin dashboard with revenue and order stats
-- 🚚 Admin order management: filter orders, view details and move them through Pending → In progress → Shipped → Delivered (or cancel)
+- ❤️ Wishlist: save products, move them to the cart, kept on your account across devices (guest items merge on sign-in)
+- 🚚 Order tracking: Placed → Confirmed → Packed → Shipped → Out for delivery → Delivered, with a timestamp for each step, courier tracking number and estimated delivery
+- 📜 Order history with cancellation (before shipping) and account settings
+- 📊 Admin analytics dashboard: revenue with month-over-month change, monthly sales chart (with table view), best sellers, low-stock alerts and customer insights (new, repeat and top customers)
+- 🧾 Admin order management: filter orders, update status with notes and tracking numbers, and see each order's full status history
 - 📦 Stock goes down when an order is placed and back up when it is cancelled
 - 🛠️ Admin panel (react-admin) for products and categories, restricted to admins
 - 🌱 Starter catalog of 18 products across 6 categories, added automatically in versioned batches (products you delete stay deleted)

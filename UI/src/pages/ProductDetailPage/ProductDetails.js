@@ -6,6 +6,7 @@ import { addItemToCartAction, toCartLine } from '../../store/actions/cartAction'
 import { formatPrice } from '../../utils/format'
 import ProductGrid from '../../components/ProductGrid/ProductGrid'
 import Rating from '../../components/Rating/Rating'
+import WishlistButton from '../../components/WishlistButton/WishlistButton'
 import { CartIcon, MinusIcon, PlusIcon, ReturnIcon, ShieldIcon, TruckIcon } from '../../components/common/Icons'
 
 const promises = [
@@ -134,6 +135,7 @@ const ProductDetails = () => {
             <button type="button" onClick={() => addToCart(true)} className="btn-primary flex-1 sm:flex-none sm:px-8">
               Buy now
             </button>
+            <WishlistButton product={product} variant="button" />
           </div>
           {error && <p className="mt-3 text-sm font-semibold text-red-400">{error}</p>}
           {selected && selected.stockQuantity > 0 && selected.stockQuantity <= 5 && (

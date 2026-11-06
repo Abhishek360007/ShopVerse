@@ -4,6 +4,7 @@ import { useDispatch } from 'react-redux'
 import { addItemToCartAction, toCartLine } from '../../store/actions/cartAction'
 import { formatPrice } from '../../utils/format'
 import { CartIcon } from '../../components/common/Icons'
+import WishlistButton from '../../components/WishlistButton/WishlistButton'
 
 const ProductCard = ({ product }) => {
   const dispatch = useDispatch();
@@ -22,7 +23,7 @@ const ProductCard = ({ product }) => {
   };
 
   return (
-    <article className="card group flex flex-col overflow-hidden">
+    <article className="card group relative flex flex-col overflow-hidden">
       <Link to={`/product/${product?.slug}`} className="relative block aspect-[330/256] overflow-hidden bg-raised">
         <img
           src={product?.thumbnail}
@@ -34,6 +35,7 @@ const ProductCard = ({ product }) => {
           {formatPrice(product?.price)}
         </span>
       </Link>
+      <WishlistButton product={product} className="absolute left-3 top-3" />
 
       <div className="flex flex-1 flex-col p-4">
         <Link to={`/product/${product?.slug}`} className="truncate text-lg font-extrabold hover:text-brand-pink" title={product?.name}>

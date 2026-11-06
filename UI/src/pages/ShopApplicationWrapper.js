@@ -7,6 +7,7 @@ import Spinner from '../components/Spinner/Spinner'
 import Toast from '../components/Toast/Toast'
 import { fetchCategories } from '../api/fetchCategories'
 import { loadCategories } from '../store/features/category'
+import { loadWishlist } from '../store/actions/wishlistAction'
 
 const ShopApplicationWrapper = () => {
   const isLoading = useSelector((state)=> state?.commonState?.loading);
@@ -18,6 +19,7 @@ const ShopApplicationWrapper = () => {
     fetchCategories().then(res=>{
       if (res) dispatch(loadCategories(res));
     });
+    dispatch(loadWishlist());
   },[dispatch]);
 
   useEffect(()=>{

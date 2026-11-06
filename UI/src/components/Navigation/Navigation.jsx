@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { countCartItems } from '../../store/features/cart';
+import { selectWishlistCount } from '../../store/features/wishlist';
 import { isTokenValid } from '../../utils/jwt-helper';
-import { BagIcon, SearchIcon, UserIcon } from '../common/Icons';
+import { BagIcon, HeartIcon, SearchIcon, UserIcon } from '../common/Icons';
 import ThemeToggle from '../ThemeToggle/ThemeToggle';
 
 const Navigation = () => {
   const cartCount = useSelector(countCartItems);
+  const wishlistCount = useSelector(selectWishlistCount);
   const navigate = useNavigate();
   const location = useLocation();
   const [query, setQuery] = useState('');
@@ -49,6 +51,15 @@ const Navigation = () => {
 
         <nav className="ml-auto flex items-center gap-4">
           <ThemeToggle />
+          <Link to="/wishlist" aria-label={`Wishlist, ${wishlistCount} items`} title="Wishlist"
+                className="relative flex h-10 w-10 items-center justify-center rounded-full border border-line bg-raised text-fg transition hover:bg-fg/10">
+            <HeartIcon className="h-5 w-5" />
+            {wishlistCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-pink px-1 text-xs font-bold text-white">
+                {wishlistCount}
+              </span>
+            )}
+          </Link>
           {loggedIn ? (
             <Link to="/account-details/profile" className="flex items-center gap-2 text-sm font-semibold hover:text-brand-pink">
               <UserIcon className="h-5 w-5" /> Account
