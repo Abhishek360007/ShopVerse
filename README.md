@@ -4,18 +4,20 @@
 
 [![CI](https://github.com/Abhishek360007/ShopVerse/actions/workflows/ci.yml/badge.svg)](https://github.com/Abhishek360007/ShopVerse/actions/workflows/ci.yml)
 
-ShopVerse is a full-stack e-commerce web application built with **React.js** on the front end and **Spring Boot** on the back end. It covers the full online shopping flow: browsing products, filtering by category, managing a cart, signing in, checking out, paying with Stripe and tracking orders. It also has an admin panel for managing products and categories.
+ShopVerse is a full-stack e-commerce web application built with **React.js** on the front end and **Spring Boot** on the back end. It covers the full online shopping flow: browsing six categories (Electronics, Fashion, Home & Kitchen, Books, Sports and Beauty), searching, managing a cart, signing in, checking out with a card (Stripe) or cash on delivery, and tracking orders. Prices are in Indian Rupees (₹). It also has an admin panel for managing products and categories.
 
 ## ✨ Features
 
-- 🏠 Home page with a hero section, new arrivals and category sections
-- 🔎 Product listing with category, price, color and size filters
-- 📦 Product detail pages with variants (color and size)
-- 🛍️ Shopping cart backed by Redux state
-- 🔐 Sign-up with email verification, login, JWT authentication and Google OAuth2 sign-in
-- 💳 Checkout with address management and Stripe payments
-- 📜 Order history and account settings
-- 🛠️ Admin panel (react-admin) for product, category and image management
+- 🌙 Dark, responsive storefront with a purple–pink theme
+- 🔎 Product search plus category pages with type filters
+- 📦 Product pages with size options, stock checks and similar products
+- 🛍️ Cart that merges repeat items and respects available stock
+- 🔐 Sign-up (optional email verification), login, JWT authentication and Google OAuth2 sign-in
+- 💳 Checkout with saved addresses, Stripe card payments or cash on delivery
+- 🧾 Order totals calculated on the server from catalog prices
+- 📜 Order history with a status timeline, cancellation and account settings
+- 🛠️ Admin panel (react-admin) for products and categories, restricted to admins
+- 🌱 Starter catalog loaded automatically on a fresh database
 - 📖 API documentation through Swagger / OpenAPI
 - 🐳 One-command setup with Docker Compose
 - ✅ Unit tests and GitHub Actions CI for the backend and frontend
@@ -26,7 +28,7 @@ ShopVerse is a full-stack e-commerce web application built with **React.js** on 
 | -------------- | -------------------------------------------------------------- |
 | Frontend       | React 18, Redux Toolkit, React Router, Tailwind CSS, Axios     |
 | Admin          | react-admin                                                    |
-| Backend        | Java 17, Spring Boot 3, Spring Security, Spring Data JPA       |
+| Backend        | Java 25, Spring Boot 4, Spring Security, Spring Data JPA       |
 | Database       | PostgreSQL                                                     |
 | Authentication | JWT, Google OAuth2                                             |
 | Payments       | Stripe                                                         |
@@ -76,7 +78,7 @@ PostgreSQL runs inside Docker, so you don't need it installed locally.
 
 #### Prerequisites
 
-- Java 17+
+- Java 25+
 - Node.js 18+ and npm
 - PostgreSQL
 
@@ -97,6 +99,9 @@ Set these environment variables. `backend/.env.example` lists them:
 | `STRIPE_SECRET`                | Stripe secret key                    |
 | `FILE_ZONE`, `CDN_KEY`, `CDN_HOST` | Storage settings for file uploads |
 | `FRONTEND_URL`                 | Frontend URL for OAuth2 redirects (default `http://localhost:3000`) |
+| `ADMIN_EMAIL`                  | The account with this email gets admin access |
+| `SEED_DATA`                    | Load the starter catalog into an empty database (default `true`) |
+| `EMAIL_VERIFICATION`           | Require an email code on sign-up (default `true`; set `false` if no mail server) |
 
 Then run:
 
@@ -106,6 +111,12 @@ cd backend
 ```
 
 The API runs at `http://localhost:8080`. Swagger UI is at `http://localhost:8080/swagger-ui/index.html`.
+
+#### Admin access
+
+Set `ADMIN_EMAIL` to your email, then sign up with that email (or restart the backend if the account already exists). Your account page will then show **Manage store**, which opens the admin panel at `/admin`.
+
+> Without `REACT_APP_STRIPE_KEY` the card option is turned off at checkout and customers can still pay with cash on delivery.
 
 #### 2. Frontend
 
