@@ -1,12 +1,13 @@
 package com.shopverse.auth.helper;
 
-import java.util.Random;
+import java.security.SecureRandom;
 
 public class VerificationCodeGenerator {
 
+    private static final SecureRandom RANDOM = new SecureRandom();
+
     public static String generateCode(){
-        Random random=new Random();
-        int code = 100000 + random.nextInt(900000);
+        int code = 100000 + RANDOM.nextInt(900000);
         return String.valueOf(code);
     }
 }
