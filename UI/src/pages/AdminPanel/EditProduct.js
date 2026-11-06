@@ -1,6 +1,6 @@
 import React from 'react'
 import { ArrayInput, BooleanInput, Edit, ImageField, ImageInput, NumberInput, required, SelectInput, SimpleForm, SimpleFormIterator, TextInput } from 'react-admin'
-import { colorSelector } from '../../components/Filters/ColorsFilter'
+import { colorChoices } from '../../utils/product-options';
 import { sizeSelector } from './CreateProduct'
 
 const EditProduct = () => {
@@ -20,7 +20,7 @@ const EditProduct = () => {
 
             <ArrayInput source='variants' label={'Edit Variants'}>
               <SimpleFormIterator inline>
-                <SelectInput source='color' choices={Object.keys(colorSelector)} resettable/>
+                <SelectInput source='color' choices={colorChoices} resettable/>
                 <SelectInput source='size' choices={sizeSelector}/>
                 <NumberInput source='stockQuantity'/>
               </SimpleFormIterator>

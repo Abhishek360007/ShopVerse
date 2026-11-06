@@ -1,5 +1,6 @@
 import axios from "axios";
 import { API_BASE_URL, getHeaders } from "./constant";
+import { errorMessage } from "../utils/format";
 
 export const placeOrderAPI = async (data)=>{
     const url = API_BASE_URL + '/api/order';
@@ -12,7 +13,7 @@ export const placeOrderAPI = async (data)=>{
         return response?.data;
     }
     catch(err){
-        throw new Error(err);
+        throw new Error(errorMessage(err, 'Unable to place your order. Please try again.'));
     }
 }
 
@@ -27,6 +28,6 @@ export const confirmPaymentAPI = async (data)=>{
         return response?.data;
     }
     catch(err){
-        throw new Error(err);
+        throw new Error(errorMessage(err, 'We could not confirm your payment.'));
     }
 }

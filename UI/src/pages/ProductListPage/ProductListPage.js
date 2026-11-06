@@ -1,82 +1,68 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import FilterIcon from '../../components/common/FilterIcon';
-import content from '../../data/content.json';
-import Categories from '../../components/Filters/Categories';
-import PriceFilter from '../../components/Filters/PriceFilter';
-import ColorsFilter from '../../components/Filters/ColorsFilter';
-import SizeFilter from '../../components/Filters/SizeFilter';
-import ProductCard from './ProductCard';
-import { getAllProducts } from '../../api/fetchProducts';
-import { useDispatch, useSelector } from 'react-redux';
-import { setLoading } from '../../store/features/common'
-const categories = content?.categories;
+import { Link, useParams } from 'react-router-dom'
+import { useSelector } from 'react-redux'
+import { getAllProducts } from '../../api/fetchProducts'
+import ProductGrid from '../../components/ProductGrid/ProductGrid'
 
-const ProductListPage = ({categoryType}) => {
-
-  const categoryData = useSelector((state)=> state?.categoryState?.categories);
-  const dispatch = useDispatch();
-  const [products,setProducts] = useState([]);
-
-  const categoryContent = useMemo(()=>{
-    return categories?.find((category)=> category.code === categoryType);
-  },[categoryType]);
-  
+const ProductListPage = () => {
+  const { code } = useParams();
+  const categories = useSelector((state)=> state?.categoryState?.categories);
+  const [products,setProducts] = useState(null);
+  const [typeId,setTypeId] = useState('');
 
   const category = useMemo(()=>{
-    return categoryData?.find(element => element?.code === categoryType);
-  },[categoryData, categoryType]);
+    return categories?.find(element => element?.code === code);
+  },[categories, code]);
+
+  useEffect(()=> setTypeId(''), [code]);
 
   useEffect(()=>{
-    dispatch(setLoading(true));
-    getAllProducts(category?.id).then(res=>{
-      setProducts(res);
-    }).catch(err=>{
-      
-    }).finally(()=>{
-      dispatch(setLoading(false));
-    })
-    
-  },[category?.id, dispatch]);
+    if (!category?.id) return;
+    setProducts(null);
+    getAllProducts(category.id, typeId).then(setProducts);
+  },[category?.id, typeId]);
 
+  if (categories?.length && !category) {
+    return (
+      <div className="shell py-16 text-center">
+        <h1 className="text-2xl font-extrabold">Category not found</h1>
+        <Link to="/" className="btn-primary mt-6">Back to shop</Link>
+      </div>
+    );
+  }
 
   return (
-    <div>
-        <div className='flex'>
-            <div className='w-[20%] p-[10px] border rounded-lg m-[20px]'>
-                {/* Filters */}
-                <div className='flex justify-between '>
-                <p className='text-[16px] text-gray-600'>Filter</p>
-                <FilterIcon />
-                
-                </div>
-                <div>
-                  {/* Product types */}
-                <p className='text-[16px] text-black mt-5'>Categories</p>
-                <Categories types={categoryContent?.types}/>
-                <hr></hr>
-                </div>
-                  {/* Price */}
-                  <PriceFilter />
-                  <hr></hr>
-                  {/* Colors */}
-                  <ColorsFilter colors={categoryContent?.meta_data?.colors}/>
-                  <hr></hr>
-                   {/* Sizes */}
-                   <SizeFilter sizes={categoryContent?.meta_data?.sizes}/>
-            </div>
+    <div className="shell py-8">
+      <nav className="mb-6 flex flex-wrap gap-2" aria-label="Categories">
+        {categories?.map((item) => (
+          <Link key={item.id} to={`/category/${item.code}`} className={`chip ${item.code === code ? 'chip-active' : ''}`}>
+            {item.name}
+          </Link>
+        ))}
+      </nav>
 
-            <div className='p-[15px]'>
-            <p className='text-black text-lg'>{category?.description}</p>
-                {/* Products */}
-                <div className='pt-4 grid grid-cols-1 lg:grid-cols-3 md:grid-cols-2 gap-8 px-2'>
-                {products?.map((item,index)=>(
-                  <ProductCard key={item?.id+"_"+index} {...item} title={item?.name}/>
-                ))}
-                </div>
+      <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">{category?.name}</h1>
+      <p className="mt-2 text-muted">{category?.description}</p>
 
-            </div>
-
+      {category?.categoryTypes?.length > 1 && (
+        <div className="mt-6 flex flex-wrap gap-2">
+          <button type="button" onClick={() => setTypeId('')} className={`chip ${!typeId ? 'chip-active' : ''}`}>All</button>
+          {category.categoryTypes.map((type) => (
+            <button key={type.id} type="button" onClick={() => setTypeId(type.id)}
+                    className={`chip ${typeId === type.id ? 'chip-active' : ''}`}>
+              {type.name}
+            </button>
+          ))}
         </div>
+      )}
+
+      <div className="mt-8">
+        {products === null
+          ? <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {[0, 1, 2, 3].map((i) => <div key={i} className="card h-[380px] animate-pulse" />)}
+            </div>
+          : <ProductGrid products={products} emptyMessage="No products in this category yet." />}
+      </div>
     </div>
   )
 }

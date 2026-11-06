@@ -1,7 +1,7 @@
 import React from 'react'
 import { ArrayInput, BooleanInput, Create, ImageField, ImageInput, NumberInput, ReferenceInput, required, SelectInput, SimpleForm, SimpleFormIterator, TextInput } from 'react-admin'
 import CategoryTypeInput from './Category/CategoryTypeInput';
-import { colorSelector } from '../../components/Filters/ColorsFilter';
+import { colorChoices } from '../../utils/product-options';
 
 export const sizeSelector =["S","M","L","XL","XXL"]
 
@@ -24,7 +24,7 @@ const CreateProduct = () => {
 
             <ArrayInput source='variants'>
               <SimpleFormIterator inline>
-                <SelectInput source='color' choices={Object.keys(colorSelector)} resettable/>
+                <SelectInput source='color' choices={colorChoices} resettable/>
                 <SelectInput source='size' choices={sizeSelector}/>
                 <NumberInput source='stockQuantity'/>
               </SimpleFormIterator>

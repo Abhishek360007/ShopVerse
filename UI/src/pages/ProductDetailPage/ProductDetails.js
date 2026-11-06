@@ -1,214 +1,162 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useLoaderData } from 'react-router-dom'
-import Breadcrumb from '../../components/Breadcrumb/Breadcrumb';
-import Rating from '../../components/Rating/Rating';
-import SizeFilter from '../../components/Filters/SizeFilter';
-import ProductColors from './ProductColors';
-import SvgCreditCard from '../../components/common/SvgCreditCard';
-import SvgCloth from '../../components/common/SvgCloth';
-import SvgShipping from '../../components/common/SvgShipping';
-import SvgReturn from '../../components/common/SvgReturn';
-import SectionHeading from '../../components/Sections/SectionsHeading/SectionHeading';
-import ProductCard from '../ProductListPage/ProductCard';
-import { useDispatch, useSelector } from 'react-redux';
-import _ from 'lodash';
-import { getAllProducts } from '../../api/fetchProducts';
-import { addItemToCartAction } from '../../store/actions/cartAction';
+import React, { useEffect, useMemo, useState } from 'react'
+import { Link, useLoaderData, useNavigate } from 'react-router-dom'
+import { useDispatch, useSelector } from 'react-redux'
+import { getAllProducts } from '../../api/fetchProducts'
+import { addItemToCartAction, toCartLine } from '../../store/actions/cartAction'
+import { formatPrice } from '../../utils/format'
+import ProductGrid from '../../components/ProductGrid/ProductGrid'
+import Rating from '../../components/Rating/Rating'
+import { CartIcon, MinusIcon, PlusIcon, ReturnIcon, ShieldIcon, TruckIcon } from '../../components/common/Icons'
 
-//const categories = content?.categories;
-
-const extraSections = [
-  {
-    icon:<SvgCreditCard />,
-    label:'Secure payment'
-  },
-  {
-    icon:<SvgCloth />,
-    label:'Size & Fit'
-  },
-  {
-    icon:<SvgShipping />,
-    label:'Free shipping'
-  },
-  {
-    icon:<SvgReturn />,
-    label:'Free Shipping & Returns'
-  }
-]
+const promises = [
+  { icon: TruckIcon, label: 'Free & fast delivery' },
+  { icon: ShieldIcon, label: 'Secure payments' },
+  { icon: ReturnIcon, label: 'Easy 7-day returns' },
+];
 
 const ProductDetails = () => {
-  const { product } = useLoaderData();
-  const [image, setImage] = useState();
-  const [breadCrumbLinks, setBreadCrumbLink] = useState([]);
+  const { product } = useLoaderData() ?? {};
   const dispatch = useDispatch();
-  const [similarProduct,setSimilarProducts] = useState([]);
+  const navigate = useNavigate();
   const categories = useSelector((state)=> state?.categoryState?.categories);
-  const [selecteSize,setSelectedSize] = useState('');
-  const [error,setError] = useState('');
+  const [image, setImage] = useState(product?.thumbnail);
+  const [variantId, setVariantId] = useState('');
+  const [quantity, setQuantity] = useState(1);
+  const [error, setError] = useState('');
+  const [similar, setSimilar] = useState([]);
 
-
-  const productCategory = useMemo(() => {
-    return categories?.find((category) => category?.id === product?.categoryId);
-  }, [product,categories]);
-
-  useEffect(()=>{
-    getAllProducts(product?.categoryId,product?.categoryTypeId).then(res=>{
-      const excludedProduct = res?.filter((item)=> item?.id !== product?.id);
-      setSimilarProducts(excludedProduct);
-    }).catch(()=>[
-      
-    ])
-  },[product?.categoryId, product?.categoryTypeId, product?.id]);
+  const variants = useMemo(() => product?.variants ?? [], [product]);
+  const hasChoice = variants.length > 1;
+  const selected = hasChoice ? variants.find((v) => v.id === variantId) : variants[0];
+  const maxQty = Math.min(selected?.stockQuantity ?? 10, 10);
+  const category = categories?.find((c) => c?.id === product?.categoryId);
 
   useEffect(() => {
     setImage(product?.thumbnail);
-    setBreadCrumbLink([]);
-    const arrayLinks = [{ title: 'Shop', path: '/' }, {
-      title: productCategory?.name,
-      path: productCategory?.name
-    }];
-    const productType = productCategory?.categoryTypes?.find((item)=> item?.id === product?.categoryTypeId);
-    
-    if(productType){
-      arrayLinks?.push({
-        title: productType?.name,
-        path: productType?.name
-      })
-    }
-    setBreadCrumbLink(arrayLinks);
-  }, [productCategory, product]);
-
-  const addItemToCart = useCallback(()=>{
-    //dispatch(addToCart({id:product?.id,quantity:1}));
-    //const selectedSize = 
-    console.log("size ",selecteSize);
-    if(!selecteSize){
-      setError('Please select size');
-    }
-    else{
-      const selectedVariant = product?.variants?.filter((variant)=> variant?.size === selecteSize)?.[0];
-      console.log("selected ",selectedVariant);
-      if(selectedVariant?.stockQuantity>0){
-        dispatch(addItemToCartAction({
-          productId:product?.id,
-          thumbnail:product?.thumbnail,
-          name: product?.name,
-          variant:selectedVariant,
-          quantity:1,
-          subTotal: product?.price,
-          price:product?.price,
-        }))
-      }
-      else{
-        setError('Out of Stock');
-      }
-    }
-
-  },[dispatch, product, selecteSize]);
+    setVariantId('');
+    setQuantity(1);
+    setError('');
+  }, [product]);
 
   useEffect(()=>{
-    if(selecteSize){
-      setError('');
+    if (!product?.categoryId) return;
+    getAllProducts(product.categoryId).then(res=>{
+      setSimilar(res?.filter((item)=> item?.id !== product?.id) ?? []);
+    });
+  },[product?.categoryId, product?.id]);
+
+  if (!product) {
+    return (
+      <div className="shell py-16 text-center">
+        <h1 className="text-2xl font-extrabold">Product not found</h1>
+        <Link to="/" className="btn-primary mt-6">Back to shop</Link>
+      </div>
+    );
+  }
+
+  const addToCart = (goToCheckout = false) => {
+    if (!selected) {
+      setError('Please choose a size');
+      return;
     }
-  },[selecteSize]);
+    if (!(selected.stockQuantity > 0)) {
+      setError('This option is out of stock');
+      return;
+    }
+    dispatch(addItemToCartAction(toCartLine(product, selected, quantity)));
+    if (goToCheckout) navigate('/cart-items');
+  };
 
-  const colors = useMemo(()=>{
-    const colorSet = _.uniq(_.map(product?.variants,'color'));
-    return colorSet
-
-  },[product]);
-
-  const sizes = useMemo(()=>{
-    const sizeSet = _.uniq(_.map(product?.variants,'size'));
-    return sizeSet
-
-  },[product]);
-
+  const images = product?.productResources?.length ? product.productResources : [{ url: product.thumbnail }];
 
   return (
-    <>
-    <div className='flex flex-col md:flex-row px-10'>
-      <div className='w-[100%] lg:w-[50%] md:w-[40%]'>
-        {/* Image */}
-        <div className='flex flex-col md:flex-row'>
-          <div className='w-[100%] md:w-[20%] justify-center h-[40px] md:h-[420px]'>
-            {/* Stack images */}
-            <div className='flex flex-row md:flex-col justify-center h-full'>
-              {
-                product?.productResources?.map((item, index) => (
-                  <button key={index} onClick={() => setImage(item?.url)} className='rounded-lg w-fit p-2 mb-2'><img src={item?.url} className='h-[60px] w-[60px] rounded-lg bg-cover bg-center hover:scale-105 hover:border' alt={'sample-' + index} /></button>
-                ))
-              }
-            </div>
+    <div className="shell py-8">
+      <nav className="mb-6 text-sm text-muted" aria-label="Breadcrumb">
+        <Link to="/" className="hover:text-white">Shop</Link>
+        {category && <> <span className="mx-2">/</span><Link to={`/category/${category.code}`} className="hover:text-white">{category.name}</Link></>}
+      </nav>
 
-          </div>
-          <div className='w-full md:w-[80%] flex justify-center md:pt-0 pt-10'>
-            <img src={image} className='h-full w-full max-h-[520px]
-         border rounded-lg cursor-pointer object-cover' alt={product?.name} />
-          </div>
-        </div>
-
-      </div>
-      <div className='w-[60%] px-10'>
-        {/* Product Description */}
-        <Breadcrumb links={breadCrumbLinks} />
-        <p className='text-3xl pt-4'>{product?.name}</p>
-        <Rating rating={product?.rating} />
-        {/* Price Tag */}
-        <p className='text-xl bold py-2'>${product?.price}</p>
-        <div className='flex flex-col py-2'>
-          <div className='flex gap-2'>
-            <p className='text-sm bold'>Select Size</p>
-            <Link className='text-sm text-gray-500 hover:text-gray-900' to={'https://en.wikipedia.org/wiki/Clothing_sizes'} target='_blank'>{'Size Guide ->'}</Link>
-          </div>
-        </div>
-        <div className='mt-2'><SizeFilter onChange={(values)=>{
-          setSelectedSize(values?.[0] ?? '')
-        }} sizes={sizes} hidleTitle multi={false}/></div>
+      <div className="grid gap-10 lg:grid-cols-2">
         <div>
-          <p className='text-lg bold'>Colors Available</p>
-          <ProductColors colors={colors} />
+          <div className="card overflow-hidden">
+            <img src={image} alt={product.name} className="aspect-[330/256] w-full object-cover" />
+          </div>
+          {images.length > 1 && (
+            <div className="mt-3 flex gap-3">
+              {images.map((item, index) => (
+                <button key={item.url + index} type="button" onClick={() => setImage(item.url)}
+                        className={`overflow-hidden rounded-xl border-2 ${image === item.url ? 'border-brand-purple' : 'border-transparent'}`}>
+                  <img src={item.url} alt={`${product.name} view ${index + 1}`} className="h-16 w-20 object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-        <div className='flex py-4'>
-         <button onClick={addItemToCart} className='bg-black rounded-lg hover:bg-gray-700'><div className='flex h-[42px] rounded-lg w-[150px] px-2 items-center justify-center bg-black text-white hover:bg-gray-700'><svg width="17" height="16" className='' viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M1.5 1.33325H2.00526C2.85578 1.33325 3.56986 1.97367 3.6621 2.81917L4.3379 9.014C4.43014 9.8595 5.14422 10.4999 5.99474 10.4999H13.205C13.9669 10.4999 14.6317 9.98332 14.82 9.2451L15.9699 4.73584C16.2387 3.68204 15.4425 2.65733 14.355 2.65733H4.5M4.52063 13.5207H5.14563M4.52063 14.1457H5.14563M13.6873 13.5207H14.3123M13.6873 14.1457H14.3123M5.66667 13.8333C5.66667 14.2935 5.29357 14.6666 4.83333 14.6666C4.3731 14.6666 4 14.2935 4 13.8333C4 13.373 4.3731 12.9999 4.83333 12.9999C5.29357 12.9999 5.66667 13.373 5.66667 13.8333ZM14.8333 13.8333C14.8333 14.2935 14.4602 14.6666 14 14.6666C13.5398 14.6666 13.1667 14.2935 13.1667 13.8333C13.1667 13.373 13.5398 12.9999 14 12.9999C14.4602 12.9999 14.8333 13.373 14.8333 13.8333Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>Add to cart</div></button>
-        </div>
-        {error && <p className='text-lg text-red-600'>{error}</p>}
-        <div className='grid md:grid-cols-2 gap-4 pt-4'>
-          {/*  */}
-          {
-            extraSections?.map((section,index)=>(
-              <div key={index} className='flex items-center'>
-                {section?.icon}
-                <p className='px-2'>{section?.label}</p>
-              </div>
-            ))
-          }    
 
+        <div>
+          <p className="text-sm font-bold uppercase tracking-wider text-brand-pink">{product.brand}</p>
+          <h1 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">{product.name}</h1>
+          {product.rating ? <div className="mt-3"><Rating rating={product.rating} /></div> : null}
+          <p className="mt-5 text-3xl font-extrabold">{formatPrice(product.price)}</p>
+          <p className="mt-1 text-sm text-muted">Inclusive of all taxes</p>
+
+          <p className="mt-6 leading-relaxed text-white/80">{product.description}</p>
+
+          {hasChoice && (
+            <fieldset className="mt-6">
+              <legend className="label">Size</legend>
+              <div className="flex flex-wrap gap-2">
+                {variants.map((variant) => (
+                  <button key={variant.id} type="button" disabled={!(variant.stockQuantity > 0)}
+                          onClick={() => { setVariantId(variant.id); setError(''); setQuantity(1); }}
+                          className={`chip disabled:cursor-not-allowed disabled:opacity-40 ${variantId === variant.id ? 'chip-active' : ''}`}>
+                    {variant.size}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          )}
+          {selected?.color && selected.color !== 'Standard' && (
+            <p className="mt-4 text-sm text-muted">Colour: <span className="font-semibold text-white">{selected.color}</span></p>
+          )}
+
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <div className="flex h-11 items-center rounded-xl border border-line bg-raised">
+              <button type="button" aria-label="Decrease quantity" className="px-3 disabled:opacity-40"
+                      disabled={quantity <= 1} onClick={() => setQuantity((q) => q - 1)}><MinusIcon className="h-4 w-4" /></button>
+              <span className="w-8 text-center font-semibold" aria-live="polite">{quantity}</span>
+              <button type="button" aria-label="Increase quantity" className="px-3 disabled:opacity-40"
+                      disabled={quantity >= maxQty} onClick={() => setQuantity((q) => q + 1)}><PlusIcon className="h-4 w-4" /></button>
+            </div>
+            <button type="button" onClick={() => addToCart(false)} className="btn-cart flex-1 sm:flex-none sm:px-8">
+              <CartIcon className="h-4 w-4" /> Add to Cart
+            </button>
+            <button type="button" onClick={() => addToCart(true)} className="btn-primary flex-1 sm:flex-none sm:px-8">
+              Buy now
+            </button>
+          </div>
+          {error && <p className="mt-3 text-sm font-semibold text-red-400">{error}</p>}
+          {selected && selected.stockQuantity > 0 && selected.stockQuantity <= 5 && (
+            <p className="mt-3 text-sm text-amber-300">Only {selected.stockQuantity} left in stock</p>
+          )}
+
+          <ul className="mt-8 grid gap-3 sm:grid-cols-3">
+            {promises.map(({ icon: Icon, label }) => (
+              <li key={label} className="flex items-center gap-2 rounded-2xl border border-line bg-surface p-3 text-sm font-semibold">
+                <Icon className="h-5 w-5 text-brand-pink" /> {label}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
 
-      
+      {similar.length > 0 && (
+        <section className="mt-16">
+          <h2 className="mb-6 text-2xl font-extrabold tracking-tight">You may also like</h2>
+          <ProductGrid products={similar} />
+        </section>
+      )}
     </div>
-    {/* Product Description */}
-    <SectionHeading title={'Product Description'}/>
-    <div className='md:w-[50%] w-full p-2'>
-    
-    <p className='px-8'>{product?.description}</p>
-    </div>
-
-    <SectionHeading title={'Similar Products'}/>
-    <div className='flex px-10'>
-    
-    <div className='pt-4 grid grid-cols-1 lg:grid-cols-4 md:grid-cols-3 gap-8 px-2 pb-10'>
-                {similarProduct?.map((item,index)=>(
-                  <ProductCard key={index} {...item}/>
-                ))}
-                {!similarProduct?.length && <p>No Products Found!</p>}
-                </div>
-    </div>
-    </>
   )
 }
 

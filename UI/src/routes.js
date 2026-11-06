@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router-dom";
 import Shop from "./Shop";
 import ShopApplicationWrapper from "./pages/ShopApplicationWrapper";
 import ProductListPage from "./pages/ProductListPage/ProductListPage";
+import SearchPage from "./pages/SearchPage/SearchPage";
 import ProductDetails from "./pages/ProductDetailPage/ProductDetails";
 import { loadProductBySlug } from "./routes/products";
 import AuthenticationWrapper from "./pages/AuthenticationWrapper";
@@ -30,12 +31,12 @@ export const router = createBrowserRouter([
             element:<Shop />
         },
         {
-            path:"/women",
-            element:<ProductListPage categoryType={'WOMEN'}/>,
+          path:"/category/:code",
+          element:<ProductListPage />,
         },
         {
-          path:"/men",
-          element:<ProductListPage categoryType={'MEN'}/>,
+          path:"/search",
+          element:<SearchPage />,
         },
         {
           path:"/product/:slug",

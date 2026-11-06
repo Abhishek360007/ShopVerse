@@ -3,13 +3,15 @@ import { setLoading } from '../store/features/common';
 import store from '../store/store';
 
 export const loadProductBySlug = async ({params}) =>{
+    store.dispatch(setLoading(true));
     try{
-        store.dispatch(setLoading(true));
         const product = await getProductBySlug(params?.slug);
-        store.dispatch(setLoading(false));
         return {product};
     }
     catch(err){
-
+        return {product: undefined};
+    }
+    finally{
+        store.dispatch(setLoading(false));
     }
 }

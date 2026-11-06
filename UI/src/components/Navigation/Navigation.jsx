@@ -1,71 +1,77 @@
-import React from 'react'
-import { Wishlist } from '../common/Wishlist'
-import { AccountIcon } from '../common/AccountIcon'
-import { CartIcon } from '../common/CartIcon'
-import { Link, NavLink, useNavigate } from 'react-router-dom'
-import './Navigation.css';
-import { useSelector } from 'react-redux'
-import { countCartItems } from '../../store/features/cart'
+import React, { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { countCartItems } from '../../store/features/cart';
+import { isTokenValid } from '../../utils/jwt-helper';
+import { BagIcon, SearchIcon, UserIcon } from '../common/Icons';
 
-const Navigation = ({variant="default"}) => {
-  const cartLength = useSelector(countCartItems);
+const Navigation = () => {
+  const cartCount = useSelector(countCartItems);
   const navigate = useNavigate();
+  const location = useLocation();
+  const [query, setQuery] = useState('');
+  const loggedIn = isTokenValid();
+
+  // Keep the box in sync with the current search page
+  useEffect(() => {
+    if (location.pathname === '/search') {
+      setQuery(new URLSearchParams(location.search).get('q') ?? '');
+    }
+  }, [location]);
+
+  const onSearch = (e) => {
+    e.preventDefault();
+    const q = query.trim();
+    if (q) navigate(`/search?q=${encodeURIComponent(q)}`);
+  };
 
   return (
-    <nav className='flex items-center py-6 px-16 justify-between gap-20 custom-nav'>
-      <div className='flex items-center gap-6'>
-        {/* Logo */}
-        <a className='flex items-center gap-3 text-3xl text-black font-bold' href='/'>
-          <img src='/logo192.png' alt='' className='w-10 h-10' />
+    <header className="sticky top-0 z-40 border-b border-line bg-ink/80 backdrop-blur-xl">
+      <div className="shell flex flex-wrap items-center gap-x-8 gap-y-3 py-3 md:flex-nowrap">
+        <Link to="/" className="gradient-text shrink-0 text-2xl font-extrabold tracking-tight">
           ShopVerse
-        </a>
+        </Link>
+
+        <form onSubmit={onSearch} role="search" className="order-last w-full md:order-none md:max-w-xl md:flex-1">
+          <label className="relative block">
+            <span className="sr-only">Search products</span>
+            <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search across electronics, fashion, home & more"
+              className="input h-10 rounded-full pl-11"
+            />
+          </label>
+        </form>
+
+        <nav className="ml-auto flex items-center gap-5">
+          {loggedIn ? (
+            <Link to="/account-details/profile" className="flex items-center gap-2 text-sm font-semibold hover:text-brand-pink">
+              <UserIcon className="h-5 w-5" /> Account
+            </Link>
+          ) : (
+            <Link to="/v1/login" className="flex items-center gap-2 text-sm font-semibold hover:text-brand-pink">
+              <UserIcon className="h-5 w-5" /> Sign in
+            </Link>
+          )}
+          <Link
+            to="/cart-items"
+            aria-label={`Cart, ${cartCount} items`}
+            className="relative flex h-10 w-12 items-center justify-center rounded-full bg-gradient-to-r from-brand-purple to-brand-pink hover:brightness-110"
+          >
+            <BagIcon className="h-5 w-5" />
+            {cartCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-xs font-bold text-ink">
+                {cartCount}
+              </span>
+            )}
+          </Link>
+        </nav>
       </div>
-      { variant ==="default" &&
-      <div className='flex flex-wrap items-center gap-10'>
-        {/* Nav items */}
-        <ul className='flex gap-14 text-gray-600 hover:text-black'>
-          <li><NavLink to='/' className={({isActive})=> isActive ? 'active-link':''}>Shop</NavLink></li>
-          <li><NavLink to='/men' className={({isActive})=> isActive ? 'active-link':''}>Men</NavLink></li>
-          <li><NavLink to='/women' className={({isActive})=> isActive ? 'active-link':''}>Women</NavLink></li>
-          <li><NavLink to='/kids' className={({isActive})=> isActive ? 'active-link':''}>Kids</NavLink></li>
-        </ul>
+    </header>
+  );
+};
 
-      </div>
-      }
-      { variant ==="default" &&
-      <div className='flex justify-center'>
-        {/* Search bar */}
-        <div className='border rounded flex overflow-hidden'>
-          <div className="flex items-center justify-center px-4 border-1">
-            <svg className="h-4 w-4 text-grey-dark" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.32 14.9l5.39 5.4a1 1 0 0 1-1.42 1.4l-5.38-5.38a8 8 0 1 1 1.41-1.41zM10 16a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"/></svg>
-            <input type="text" className="px-4 py-2 outline-none" placeholder="Search"/>
-          </div> 
-
-        </div>
-      </div>
-      }
-
-      <div className='flex flex-wrap items-center gap-4'>
-        {/* Action Items - icons */}
-        { variant ==="default" &&
-        <ul className='flex gap-8 '>
-          <li><button ><Wishlist /></button></li>
-          <li><button onClick={()=> navigate('/account-details/profile')}><AccountIcon/></button></li>
-          <li><Link to='/cart-items' className='flex flex-wrap'><CartIcon />
-          {cartLength > 0 && <div className='absolute ml-6 inline-flex items-center justify-center h-6 w-6 bg-black text-white rounded-full border-2 text-xs border-white'>{cartLength}</div>}
-          </Link></li>
-        </ul>}
-        {
-          variant === "auth" &&
-          <ul className='flex gap-8'>
-            <li className='text-black border border-black hover:bg-slate-100 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 focus:outline-none'><NavLink to={"/v1/login"} className={({isActive})=> isActive ? 'active-link':''}>Login</NavLink></li>
-            <li className='text-black border border-black hover:bg-slate-100 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 focus:outline-none'><NavLink to="/v1/register" className={({isActive})=> isActive ? 'active-link':''}>Signup</NavLink></li>
-          </ul>
-        }
-      </div>
-
-    </nav>
-  )
-}
-
-export default Navigation
+export default Navigation;

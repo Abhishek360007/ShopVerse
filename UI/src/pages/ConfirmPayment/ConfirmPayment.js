@@ -1,56 +1,49 @@
 import React, { useEffect, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useDispatch } from 'react-redux';
 import { confirmPaymentAPI } from '../../api/order';
-import { useDispatch, useSelector } from 'react-redux';
-import { setLoading } from '../../store/features/common';
-import Spinner from '../../components/Spinner/Spinner';
 import { clearCart } from '../../store/actions/cartAction';
 
 const ConfirmPayment = () => {
+  const location = useLocation();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [errorMessage, setErrorMessage] = useState('');
 
-    const location = useLocation();
-    const dispatch = useDispatch();
-    const [errorMessage,setErrorMessage] = useState('');
-    const isLoading = useSelector((state)=> state?.commonState?.loading);
-    const navigate = useNavigate();
-   
+  useEffect(() => {
+    const query = new URLSearchParams(location.search);
+    const redirectStatus = query.get('redirect_status');
+    const paymentIntent = query.get('payment_intent');
 
-    useEffect(()=>{
+    if (redirectStatus === 'succeeded') {
+      confirmPaymentAPI({ paymentIntent, status: redirectStatus }).then(res => {
+        dispatch(clearCart());
+        navigate(`/orderConfirmed?orderId=${res?.orderId}`, { replace: true });
+      }).catch(() => {
+        setErrorMessage('Your payment went through, but we could not confirm the order. Please check My Orders.');
+      });
+    } else {
+      setErrorMessage(`Payment was not completed (${redirectStatus ?? 'unknown status'}). You have not been charged.`);
+    }
+  }, [dispatch, location.search, navigate]);
 
-        const query = new URLSearchParams(location.search);
-        const redirectStatus = query.get('redirect_status');
-        const paymentIntent = query.get('payment_intent');
-        if(redirectStatus === 'succeeded'){
-            dispatch(setLoading(true));
-            dispatch(clearCart());
-            confirmPaymentAPI({
-                paymentIntent: paymentIntent,
-                status:redirectStatus
-            }).then(res=>{
-                const orderId = res?.orderId;
-                navigate(`/orderConfirmed?orderId=${orderId}`)
-            }).catch(err=>{
-                setErrorMessage("Something went wrong!");
-            }).finally(()=>{
-                dispatch(setLoading(false));
-            })
-        }
-
-        else{
-            setErrorMessage('Payment Failed - '+redirectStatus)
-        }
-
-        
-    },[dispatch, location.search, navigate]);
-
-  
   return (
-    <>
-    {errorMessage
-      ? <div className='p-8 text-red-600'>{errorMessage}</div>
-      : <div className='p-8'>Processing Payment...</div>}
-    {isLoading && <Spinner />}
-    </>
+    <div className="flex min-h-screen items-center justify-center px-4">
+      <div className="card w-full max-w-sm rounded-3xl p-8 text-center">
+        {errorMessage ? (
+          <>
+            <p className="text-lg font-extrabold">Something went wrong</p>
+            <p className="mt-2 text-sm text-muted">{errorMessage}</p>
+            <Link to="/cart-items" className="btn-primary mt-6 w-full">Back to cart</Link>
+          </>
+        ) : (
+          <>
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-white/15 border-t-brand-pink" />
+            <p className="mt-4 font-semibold">Confirming your payment…</p>
+          </>
+        )}
+      </div>
+    </div>
   )
 }
 

@@ -3,26 +3,35 @@ import React from 'react'
 import CheckoutForm from './CheckoutPayment';
 import { loadStripe } from '@stripe/stripe-js';
 
-const stripePublishableKey = process.env.REACT_APP_STRIPE_KEY || process.env.STRIPE_KEY || '';
-//Publishable Key
-const stripePromise = loadStripe(stripePublishableKey);
+const stripePublishableKey = process.env.REACT_APP_STRIPE_KEY || '';
 
-const PaymentPage = (props) => {
+export const stripeEnabled = Boolean(stripePublishableKey);
 
-    const options = {
-        mode: 'payment',
-        amount: 100,
-        currency: 'inr',
-        // Fully customizable with appearance API.
-        appearance: {
-            theme: 'flat'
-        },
-      };
+// Only load Stripe when a publishable key is configured
+const stripePromise = stripeEnabled ? loadStripe(stripePublishableKey) : null;
+
+const PaymentPage = ({ amount, ...props }) => {
+  if (!stripeEnabled) return null;
+
+  const options = {
+    mode: 'payment',
+    amount: Math.max(Math.round((Number(amount) || 0) * 100), 100), // paise
+    currency: 'inr',
+    appearance: {
+      theme: 'night',
+      variables: {
+        colorPrimary: '#a855f7',
+        colorBackground: '#1d1b27',
+        borderRadius: '12px',
+      },
+    },
+  };
+
   return (
-    <div>
-        <Elements stripe={stripePromise} options={options}>
-             <CheckoutForm {...props}/>   
-        </Elements>
+    <div className="mt-6">
+      <Elements stripe={stripePromise} options={options}>
+        <CheckoutForm {...props}/>
+      </Elements>
     </div>
   )
 }

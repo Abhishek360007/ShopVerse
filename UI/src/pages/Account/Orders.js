@@ -1,140 +1,120 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { Link } from 'react-router-dom';
+import moment from 'moment';
 import { setLoading } from '../../store/features/common';
 import { cancelOrderAPI, fetchOrderAPI } from '../../api/userInfo';
 import { cancelOrder, loadOrders, selectAllOrders } from '../../store/features/user';
-import moment from 'moment';
 import Timeline from '../../components/Timeline/Timeline';
 import { getStepCount } from '../../utils/order-util';
+import { formatPrice } from '../../utils/format';
+
+const filters = [
+  { value: 'ACTIVE', label: 'Active' },
+  { value: 'COMPLETED', label: 'Completed' },
+  { value: 'CANCELLED', label: 'Cancelled' },
+];
+
+const groupOf = (status) =>
+  ['PENDING', 'IN_PROGRESS', 'SHIPPED'].includes(status) ? 'ACTIVE' : status === 'DELIVERED' ? 'COMPLETED' : status;
+
+const statusLabel = (status) => (status ?? '').replace('_', ' ').toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
 
 const Orders = () => {
   const dispatch = useDispatch();
   const allOrders = useSelector(selectAllOrders);
-  const [selectedFilter,setSelectedFilter] = useState('ACTIVE');
-  const [orders,setOrders]= useState([]);
-  const [selectedOrder,setSelectedOrder] = useState('');
+  const [filter, setFilter] = useState('ACTIVE');
+  const [openId, setOpenId] = useState('');
+  const [error, setError] = useState('');
 
-  useEffect(()=>{
+  useEffect(() => {
     dispatch(setLoading(true));
-    fetchOrderAPI().then(res=>{
-      dispatch(loadOrders(res));
-    }).catch(err=>{
+    fetchOrderAPI().then(res => dispatch(loadOrders(res)))
+      .catch(() => setError('We could not load your orders.'))
+      .finally(() => dispatch(setLoading(false)));
+  }, [dispatch]);
 
-    }).finally(()=>{
-      dispatch(setLoading(false));
-    })
-  },[dispatch]);
+  const orders = useMemo(() =>
+    [...(allOrders ?? [])]
+      .sort((a, b) => new Date(b?.orderDate) - new Date(a?.orderDate))
+      .filter((order) => groupOf(order?.orderStatus) === filter),
+  [allOrders, filter]);
 
-  useEffect(()=>{
-    const displayOrders=[];
-    allOrders?.forEach(order=>{
-
-      displayOrders.push({
-        id:order?.id,
-        orderDate:order?.orderDate,
-        expectedDeliveryDate:order?.expectedDeliveryDate,
-        orderStatus: order?.orderStatus,
-        status:(order?.orderStatus === 'PENDING' || order?.orderStatus === 'IN_PROGRESS' || order?.orderStatus === 'SHIPPED')? 'ACTIVE': order?.orderStatus === 'DELIVERED' ? 'COMPLETED':order?.orderStatus,
-        items:order?.orderItemList?.map(orderItem=>{
-          return {
-            id:orderItem?.id,
-            name:orderItem?.product?.name,
-            price: orderItem?.product?.price,
-            quantity:orderItem?.quantity,
-            url:orderItem?.product?.resources?.[0]?.url,
-            slug:orderItem?.product?.slug,
-          }
-        }),
-        totalAmount: order?.totalAmount, 
-      })
-    });
-    setOrders(displayOrders);
-
-  },[allOrders]);
-
-  const handleOnChange = useCallback((evt)=>{
-    const value = evt?.target?.value;
-    setSelectedFilter(value);
-  },[]);
-
-  const onCancelOrder = useCallback((id)=>{
+  const onCancel = (id) => {
     dispatch(setLoading(true));
-    cancelOrderAPI(id).then(res=>{
-      dispatch(cancelOrder(id));
-    }).catch(err=>{
-
-    }).finally(()=>{
-      dispatch(setLoading(false));
-    });
-  },[dispatch])
+    cancelOrderAPI(id).then(() => dispatch(cancelOrder(id)))
+      .catch(() => setError('This order could not be cancelled.'))
+      .finally(() => dispatch(setLoading(false)));
+  };
 
   return (
     <div>
-      {
-        orders?.length > 0 && <div className='md:w-[70%] w-full'>
-          <div className='flex justify-between'>
-          <h1 className='text-2xl mb-4'>My Orders</h1>
-          <select className='border-2 rounded-lg mb-4 p-2' value={selectedFilter} onChange={handleOnChange}>
-              <option value={'ACTIVE'}>Active</option>
-              <option value={'CANCELLED'}>Cancelled</option>
-              <option value={'COMPLETED'}>Completed</option>
-          </select>
-          </div>
-          {
-            orders?.map((order,index)=>{
-              return (
-                order?.status ===selectedFilter && <div key={index}><div className='bg-gray-200 p-4 mb-8'>
-                  <p className='text-lg font-bold'>Order no. #{order?.id}</p>
-                  <div className='flex justify-between mt-2'>
-                    <div className='flex flex-col text-gray-500 text-sm'>
-                      <p>Order Date : {moment(order?.orderDate).format('MMMM DD YYYY')}</p>
-                      <p>Expected Delivery Date: {moment(order?.expectedDeliveryDate || moment(order?.orderDate).add(3,'days')).format('MMMM DD YYYY')}</p>
-                    </div>
-                    <div className='flex flex-col text-gray-500 text-sm'>
-                      <p>Order Status : {order?.orderStatus}</p>
-                      <button onClick={()=> setSelectedOrder(order?.id)} className='text-blue-900 text-right rounded underline cursor-pointer'>View Details</button>
-                    </div>
-                  </div>
-                </div>
-
-                {selectedOrder === order?.id && <div>
-                  {
-                    order?.items?.map((orderItem,index)=>{
-                      return (
-                        <div key={index} className='flex gap-4'>
-                          <img src={orderItem?.url} alt={orderItem?.name} className='w-[120px] h-[120px] object-cover m-2 rounded' />
-                          <div className='flex flex-col text-sm py-2 text-gray-600'>
-                            <p>{orderItem?.name || 'Name'}</p>
-                            <p>Quantity {orderItem?.quantity}</p>
-                          </div>
-                        </div>
-                      )
-                    })
-                  }
-                  <div className='flex justify-between'>
-                    <p>Total : ${order?.totalAmount}</p>
-                    <button onClick={()=> setSelectedOrder('')} className='text-blue-900 text-right rounded underline cursor-pointer'>Hide Details</button>
-                  </div>
-                  {
-                    order?.orderStatus !== 'CANCELLED' && <>
-                    <Timeline stepCount={getStepCount[order?.orderStatus]}/>
-                    {
-                      getStepCount[order?.orderStatus] <=2 && 
-                      <button onClick={()=> onCancelOrder(order?.id)} className='bg-black h-[42px] w-[120px] text-white rounded-lg mb-2'>Cancel Order</button>
-                    }
-                    </>
-                  }
-
-                  </div>}
-                
-                </div>
-                
-              )
-            })
-          }
-
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-xl font-extrabold">My orders</h2>
+        <div className="flex gap-2">
+          {filters.map((f) => (
+            <button key={f.value} type="button" onClick={() => setFilter(f.value)}
+                    className={`chip py-1.5 ${filter === f.value ? 'chip-active' : ''}`}>{f.label}</button>
+          ))}
         </div>
-      }
+      </div>
+      {error && <p className="mt-4 text-sm font-semibold text-red-400">{error}</p>}
+
+      {!orders.length ? (
+        <div className="mt-8 text-center">
+          <p className="text-muted">No {filter.toLowerCase()} orders.</p>
+          <Link to="/" className="btn-primary mt-4">Start shopping</Link>
+        </div>
+      ) : (
+        <ul className="mt-6 space-y-4">
+          {orders.map((order) => {
+            const open = openId === order.id;
+            const step = getStepCount[order?.orderStatus];
+            return (
+              <li key={order.id} className="rounded-2xl border border-line bg-raised p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold">Order #{String(order.id).slice(0, 8).toUpperCase()}</p>
+                    <p className="text-xs text-muted">Placed {moment(order?.orderDate).format('D MMM YYYY')}
+                      {order?.expectedDeliveryDate && groupOf(order.orderStatus) === 'ACTIVE' &&
+                        <> · Arrives by {moment(order.expectedDeliveryDate).format('D MMM YYYY')}</>}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-extrabold">{formatPrice(order?.totalAmount)}</p>
+                    <p className="text-xs text-muted">{statusLabel(order?.orderStatus)}</p>
+                  </div>
+                </div>
+
+                <button type="button" onClick={() => setOpenId(open ? '' : order.id)}
+                        className="mt-3 text-sm font-semibold text-brand-pink hover:underline">
+                  {open ? 'Hide details' : 'View details'}
+                </button>
+
+                {open && (
+                  <div className="mt-3 border-t border-line pt-3">
+                    {order?.orderStatus !== 'CANCELLED' && step && <Timeline stepCount={step} />}
+                    <ul className="space-y-2">
+                      {order?.orderItemList?.map((item) => (
+                        <li key={item?.id} className="flex items-center gap-3 text-sm">
+                          <img src={item?.product?.resources?.[0]?.url} alt="" className="h-12 w-14 rounded-lg object-cover" />
+                          <span className="min-w-0 flex-1 truncate">{item?.product?.name}</span>
+                          <span className="text-muted">× {item?.quantity}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    {step && step <= 2 && (
+                      <button type="button" onClick={() => onCancel(order.id)} className="btn-ghost mt-4 h-9 text-red-300">
+                        Cancel order
+                      </button>
+                    )}
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   )
 }

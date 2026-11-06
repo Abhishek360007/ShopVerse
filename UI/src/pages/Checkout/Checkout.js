@@ -1,100 +1,143 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { selectCartItems } from '../../store/features/cart';
 import { fetchUserDetails } from '../../api/userInfo';
+import { placeOrderAPI } from '../../api/order';
 import { setLoading } from '../../store/features/common';
-import { useNavigate } from 'react-router-dom';
-import PaymentPage from '../PaymentPage/PaymentPage';
-
+import { loadUserInfo, selectUserInfo } from '../../store/features/user';
+import { clearCart } from '../../store/actions/cartAction';
+import { createOrderRequest } from '../../utils/order-util';
+import { cartTotal, formatPrice } from '../../utils/format';
+import PaymentPage, { stripeEnabled } from '../PaymentPage/PaymentPage';
+import AddAddress from '../Account/AddAddress';
 
 const Checkout = () => {
   const cartItems = useSelector(selectCartItems);
+  const userInfo = useSelector(selectUserInfo);
   const dispatch = useDispatch();
-  const [userInfo,setUserInfo] = useState([]);
   const navigate = useNavigate();
-  const [paymentMethod,setPaymentMethod] = useState('');
+  const [addressId, setAddressId] = useState('');
+  const [addingAddress, setAddingAddress] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState(stripeEnabled ? 'CARD' : 'COD');
+  const [error, setError] = useState('');
+  const total = cartTotal(cartItems);
+  const addresses = useMemo(() => userInfo?.addressList ?? [], [userInfo?.addressList]);
 
-  const subTotal = useMemo(()=>{
-    let value = 0;
-    cartItems?.forEach(element => {
-       value += element?.subTotal 
-    });
-    return value?.toFixed(2);
-  },[cartItems]);
+  useEffect(() => {
+    dispatch(setLoading(true));
+    fetchUserDetails().then(res => dispatch(loadUserInfo(res)))
+      .catch(() => setError('We could not load your account. Please sign in again.'))
+      .finally(() => dispatch(setLoading(false)));
+  }, [dispatch]);
 
-  useEffect(()=>{
-    dispatch(setLoading(true))
-    fetchUserDetails().then(res=>{
-      setUserInfo(res);
-    }).catch(err=>{
+  // Pick the first saved address by default
+  useEffect(() => {
+    if (!addressId && addresses.length) setAddressId(addresses[0].id);
+  }, [addresses, addressId]);
 
-    }).finally(()=>{
-      dispatch(setLoading(false))
-    })
-  },[dispatch]);
-  
+  if (!cartItems.length) return <Navigate to="/cart-items" replace />;
+
+  const placeCodOrder = () => {
+    setError('');
+    dispatch(setLoading(true));
+    placeOrderAPI(createOrderRequest(cartItems, userInfo?.id, addressId, 'COD'))
+      .then(res => {
+        navigate(`/orderConfirmed?orderId=${res?.orderId}&method=cod`, { replace: true });
+        dispatch(clearCart());
+      })
+      .catch(err => setError(err.message))
+      .finally(() => dispatch(setLoading(false)));
+  };
+
   return (
-    <div className='p-8 flex'>
-      <div className='w-[70%]'>
-        <div className='flex gap-8'>
-          {/* Address */}
-          <p className='font-bold'>Delivery address</p>
-          {userInfo?.addressList && 
-          <div>
-            <p>{userInfo?.addressList?.[0]?.name}</p>
-            <p>{userInfo?.addressList?.[0]?.street}</p>
-            <p>{userInfo?.addressList?.[0]?.city},{userInfo?.addressList?.[0]?.state} {userInfo?.addressList?.[0]?.zipCode}</p>
-          </div>}
-        </div>
-        <hr className='h-[2px] bg-slate-200 w-[90%] my-4'></hr>    
-        <div className='flex gap-8 flex-col'>
-          {/* Address */}
-          <p className='font-bold'>Choose delivery</p>
-          <div>
-            <p>Select a day</p>
-            <div className='flex gap-4 mt-4'>
-                  <div className='w-[80px] h-[48px] flex flex-col justify-center border text-center mb-4 rounded-lg mr-4 cursor-pointer
-                   hover:scale-110 bg-gray-200 border-gray-500 text-gray-500'><p className='text-center'>{'Oct 5'}</p></div>
+    <div className="shell py-8">
+      <h1 className="text-3xl font-extrabold tracking-tight">Checkout</h1>
 
-            <div className='w-[80px] h-[48px] flex flex-col justify-center border text-center mb-4 rounded-lg mr-4 cursor-pointer
-                   hover:scale-110 bg-white border-gray-500 text-gray-500'><p className='text-center'>{'Oct 8'}</p></div>
-                  
-                  </div>
-          </div>
-        </div>
-        <hr className='h-[2px] bg-slate-200 w-[90%] my-4'></hr>
-        <div className='flex flex-col gap-2'>
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
+        <div className="space-y-6">
           {/* Address */}
-          <p className='font-bold'>Payment Method</p>
-          <div className='mt-4 flex flex-col gap-4'>
-            <div className='flex gap-2'>
-            <input type='radio' name='payment_mathod' value={'CARD'} onChange={()=> setPaymentMethod('CARD')}/>
-            <p> Credit/Debit Card</p>
+          <section className="card rounded-2xl p-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-extrabold">1. Delivery address</h2>
+              {addresses.length > 0 && !addingAddress && (
+                <button type="button" onClick={() => setAddingAddress(true)} className="text-sm font-semibold text-brand-pink hover:underline">
+                  + Add new
+                </button>
+              )}
             </div>
-            <div className='flex gap-2'>
-            <input type='radio' name='payment_mathod' value={'COD'} onChange={()=> setPaymentMethod('COD')}/>
-            <p> Cash on delivery</p>
-            </div>
-            <div className='flex gap-2'>
-            <input type='radio' name='payment_mathod' value={'UPI'} onChange={()=> setPaymentMethod('COD')}/>
-            <p> UPI/Wallet</p>
+            {(addingAddress || addresses.length === 0) ? (
+              <div className="mt-4">
+                {addresses.length === 0 && <p className="mb-4 text-sm text-muted">Add an address to deliver your order to.</p>}
+                <AddAddress onCancel={addresses.length ? () => setAddingAddress(false) : undefined}
+                            onSaved={(address) => { setAddressId(address?.id); setAddingAddress(false); }} />
+              </div>
+            ) : (
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {addresses.map((address) => (
+                  <label key={address.id}
+                         className={`cursor-pointer rounded-2xl border p-4 text-sm transition ${addressId === address.id ? 'border-brand-purple bg-brand-purple/10' : 'border-line bg-raised hover:border-white/20'}`}>
+                    <input type="radio" name="address" className="sr-only" checked={addressId === address.id}
+                           onChange={() => setAddressId(address.id)} />
+                    <p className="font-bold">{address.name}</p>
+                    <p className="mt-1 text-muted">{address.street}, {address.city}, {address.state} {address.zipCode}</p>
+                    <p className="text-muted">{address.phoneNumber}</p>
+                  </label>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Payment */}
+          <section className="card rounded-2xl p-6">
+            <h2 className="text-lg font-extrabold">2. Payment method</h2>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {[
+                { value: 'CARD', title: 'Credit / Debit card', text: stripeEnabled ? 'Pay securely with Stripe' : 'Not configured for this store', disabled: !stripeEnabled },
+                { value: 'COD', title: 'Cash on delivery', text: 'Pay when your order arrives' },
+              ].map((option) => (
+                <label key={option.value}
+                       className={`rounded-2xl border p-4 text-sm transition ${option.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${paymentMethod === option.value ? 'border-brand-purple bg-brand-purple/10' : 'border-line bg-raised hover:border-white/20'}`}>
+                  <input type="radio" name="payment" className="sr-only" disabled={option.disabled}
+                         checked={paymentMethod === option.value} onChange={() => setPaymentMethod(option.value)} />
+                  <p className="font-bold">{option.title}</p>
+                  <p className="mt-1 text-muted">{option.text}</p>
+                </label>
+              ))}
             </div>
 
-          </div>
+            {!addressId && <p className="mt-4 text-sm text-amber-300">Choose a delivery address to continue.</p>}
+
+            {addressId && paymentMethod === 'CARD' && (
+              <PaymentPage userId={userInfo?.id} addressId={addressId} amount={total} />
+            )}
+            {addressId && paymentMethod === 'COD' && (
+              <button type="button" onClick={placeCodOrder} className="btn-primary mt-6 w-full sm:w-auto sm:px-10">
+                Place order · {formatPrice(total)}
+              </button>
+            )}
+            {error && <p className="mt-4 text-sm font-semibold text-red-400">{error}</p>}
+          </section>
         </div>
-        {paymentMethod === 'CARD' && <PaymentPage userId={userInfo?.id} addressId={userInfo?.addressList?.[0]?.id}/>}
-        
-        {paymentMethod !== 'CARD' && <button className='w-[150px] items-center h-[48px] bg-black border rounded-lg mt-4 text-white hover:bg-gray-800' onClick={()=> navigate('/payment')}>Pay Now</button>}
+
+        <aside className="card h-fit rounded-2xl p-6">
+          <h2 className="text-lg font-extrabold">Order summary</h2>
+          <ul className="mt-4 space-y-3">
+            {cartItems.map((item) => (
+              <li key={item?.variant?.id} className="flex items-center gap-3 text-sm">
+                <img src={item?.thumbnail} alt="" className="h-12 w-14 rounded-lg object-cover" />
+                <span className="min-w-0 flex-1 truncate">{item?.name} <span className="text-muted">× {item?.quantity}</span></span>
+                <span className="font-semibold">{formatPrice(item?.subTotal)}</span>
+              </li>
+            ))}
+          </ul>
+          <dl className="mt-4 space-y-2 border-t border-line pt-4 text-sm">
+            <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd>{formatPrice(total)}</dd></div>
+            <div className="flex justify-between"><dt className="text-muted">Shipping</dt><dd className="text-emerald-400">FREE</dd></div>
+            <div className="flex justify-between pt-2 text-base font-extrabold"><dt>Total</dt><dd>{formatPrice(total)}</dd></div>
+          </dl>
+        </aside>
       </div>
-      <div className='w-[30%] h-[30%] border rounded-lg border-gray-500 p-4 flex flex-col gap-4'>
-        <p>Order Summary</p>
-        <p>Items Count = {cartItems?.length}</p>
-        <p>SubTotal = ${subTotal}</p>
-        <p>Shipping = FREE</p>
-        <hr className='h-[2px] bg-gray-400'></hr>
-        <p>Total Amount = ${subTotal}</p>
-      </div>
-
     </div>
   )
 }

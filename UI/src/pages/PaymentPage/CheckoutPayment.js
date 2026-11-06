@@ -14,13 +14,11 @@ const CheckoutForm = ({userId,addressId}) => {
   const dispatch = useDispatch();
   const [error,setError] =useState('');
 
-
   const handleSubmit = useCallback(async (event)=>{
-
     event?.preventDefault();
     if (!stripe || !elements) return;
 
-    const orderRequest = createOrderRequest(cartItems,userId,addressId);
+    const orderRequest = createOrderRequest(cartItems,userId,addressId,'CARD');
     dispatch(setLoading(true));
     setError('');
 
@@ -31,36 +29,29 @@ const CheckoutForm = ({userId,addressId}) => {
       return;
     }
 
-    
-    placeOrderAPI(orderRequest).then(res=>{
-        return stripe.confirmPayment({
-            elements,
-            clientSecret: res?.credentials?.client_secret,
-            
-            confirmParams:{
-                payment_method:'pm_card_visa',
-                return_url:`${window.location.origin}/confirmPayment`
-            }
-        }).then(result=>{
-            if (result?.error?.message) setError(result.error.message);
-        })
-
-        
-        
-    }).catch(()=>{
-        setError('Unable to place your order. Please try again.');
-    }).finally(()=>{
-        dispatch(setLoading(false));
-    })
-
-
+    try {
+      const res = await placeOrderAPI(orderRequest);
+      const result = await stripe.confirmPayment({
+        elements,
+        clientSecret: res?.credentials?.client_secret,
+        confirmParams:{
+          return_url:`${window.location.origin}/confirmPayment`
+        }
+      });
+      // Only reached when confirmation fails; on success Stripe redirects to return_url
+      if (result?.error?.message) setError(result.error.message);
+    } catch (err) {
+      setError(err?.message || 'Unable to place your order. Please try again.');
+    } finally {
+      dispatch(setLoading(false));
+    }
   },[addressId, cartItems, dispatch, elements, stripe, userId]);
 
   return (
-    <form className='items-center p-2 mt-4 w-[320px] h-[320px]' onSubmit={handleSubmit}>
+    <form className='max-w-md' onSubmit={handleSubmit}>
       <PaymentElement />
-      <button type='submit' disabled={!stripe} className='w-[150px] items-center h-[48px] bg-black border rounded-lg mt-4 text-white hover:bg-gray-800'>Pay Now</button>
-      {error && <p className='text-sm pt-4 text-red-600'>{error}</p>}
+      <button type='submit' disabled={!stripe} className='btn-primary mt-6 w-full'>Pay now</button>
+      {error && <p className='mt-4 text-sm font-semibold text-red-400'>{error}</p>}
     </form>
   );
 };

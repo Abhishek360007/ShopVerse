@@ -1,32 +1,28 @@
-import React from 'react'
-import FbIcon from '../common/FbIcon'
-import InstaIcon from '../common/InstaIcon'
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
+const Footer = () => {
+  const categories = useSelector((state) => state?.categoryState?.categories) ?? [];
 
-const Footer = ({content}) => {
   return (
-    <div className='bg-black text-white py-8'>
-        <div className='flex justify-around'>
-            {content?.items && content?.items?.map((item,index)=>{
-                return (
-                    <div className='flex flex-col'>
-                    <p className='text-[16px] pb-[10px]'>{item?.title}</p>
-                    {item?.list && item?.list?.map((listItem,index)=><a className='flex flex-col text-[12px] py-2'
-                     href={listItem?.path}>{listItem?.label}</a>)}
-                     {item?.description && <p>{item?.description}</p>}
-                    </div>
-                )
-            })}
-        </div>
-        <div className='flex gap-2 items-center justify-center py-4'>
-          <a href='/fb'><FbIcon /></a>
-          <a href='/insta'><InstaIcon /></a>  
-        </div>
-        <p className='text-sm text-white text-center content-center'>{content?.copyright}</p>
+    <footer className="mt-16 border-t border-line">
+      <div className="shell flex flex-col items-center gap-3 py-10 text-center">
+        <p className="text-base font-bold">ShopVerse</p>
+        <p className="text-sm text-muted">Your everything store — electronics, fashion, home, books, sports &amp; beauty.</p>
+        {categories.length > 0 && (
+          <ul className="flex flex-wrap justify-center gap-x-5 gap-y-1 text-sm text-muted">
+            {categories.map((category) => (
+              <li key={category.id}>
+                <Link to={`/category/${category.code}`} className="hover:text-white">{category.name}</Link>
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="text-sm text-muted">© {new Date().getFullYear()} ShopVerse. All rights reserved.</p>
+      </div>
+    </footer>
+  );
+};
 
-    </div>
-  )
-}
-
-
-export default Footer
+export default Footer;

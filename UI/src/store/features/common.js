@@ -1,7 +1,8 @@
 import { createSlice } from "@reduxjs/toolkit"
 
 export const initialState = {
-    loading: false
+    loading: false,
+    toast: null,
 }
 
 export const commonSlice = createSlice({
@@ -13,9 +14,21 @@ export const commonSlice = createSlice({
                 ...state,
                 loading:action?.payload
             }
+        },
+        showToast: (state, action) => {
+            return {
+                ...state,
+                toast: { message: action?.payload, id: Date.now() }
+            }
+        },
+        hideToast: (state) => {
+            return {
+                ...state,
+                toast: null
+            }
         }
     }
 });
 
-export const { setLoading } = commonSlice?.actions;
+export const { setLoading, showToast, hideToast } = commonSlice?.actions;
 export default commonSlice?.reducer;

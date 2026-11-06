@@ -1,67 +1,75 @@
-import React, { useCallback, useState } from 'react'
-import GoogleSignIn from '../../components/Buttons/GoogleSignIn'
-import { Link, useNavigate } from 'react-router-dom'
+import React, { useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useDispatch } from 'react-redux';
+import GoogleSignIn from '../../components/Buttons/GoogleSignIn'
 import { setLoading } from '../../store/features/common'
 import { loginAPI } from '../../api/authentication';
 import { saveToken } from '../../utils/jwt-helper';
+import { safeRedirect } from '../../utils/redirect';
+
+
 const Login = () => {
-  const [values,setValues] =useState({
-    userName:'',
-    password:''
-  });
-  const [error,setError] =useState('');
+  const [values, setValues] = useState({ userName: '', password: '' });
+  const [error, setError] = useState('');
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const redirect = safeRedirect(params.get('redirect'));
 
-  const onSubmit= useCallback((e)=>{
+  const onChange = (e) => setValues((v) => ({ ...v, [e.target.name]: e.target.value }));
+
+  const onSubmit = (e) => {
     e.preventDefault();
     setError('');
     dispatch(setLoading(true));
-    loginAPI(values).then(res=>{
-        if(res?.token){
-          saveToken(res?.token);
-          navigate('/')
-        }
-        else{
-          setError("Something went wrong!");
-        }
-    }).catch(err=>{
-      //To-do Check response status
-      setError("Invalid Credentials!");
-    }).finally(()=>{
+    loginAPI(values).then(res => {
+      if (res?.token) {
+        saveToken(res.token);
+        navigate(redirect, { replace: true });
+      } else {
+        setError('Something went wrong. Please try again.');
+      }
+    }).catch(() => {
+      setError('Incorrect email or password, or your email is not verified yet.');
+    }).finally(() => {
       dispatch(setLoading(false));
     });
-
-
-  },[dispatch, navigate, values]);
-
-  const handleOnChange = useCallback((e)=>{
-    e.persist();
-    setValues(values=>({
-      ...values,
-      [e.target.name]:e.target?.value,
-    }))
-  },[]);
+  };
 
   return (
-    <div className='px-8 w-full lg:w-[70%]'>
-
-      <p className='text-3xl font-bold pb-4 pt-4'>Sign In</p>
-      <GoogleSignIn/>
-      <p className='text-gray-500 items-center text-center w-full py-2'>OR</p>
-    
-      <div className='pt-4'>
-        <form onSubmit={onSubmit}>
-          <input type="email" name='userName' value={values?.userName} onChange={handleOnChange} placeholder='Email address' className='h-[48px] w-full border p-2 border-gray-400' required/>
-          <input type="password" name='password' value={values?.password} onChange={handleOnChange} placeholder='Password' className='h-[48px] mt-8 w-full border p-2 border-gray-400' required autoComplete='new-password'/>
-          <Link className='text-right w-full float-right underline pt-2 text-gray-500 hover:text-black'>Forgot Password?</Link>
-          <button className='border w-full rounded-lg h-[48px] mb-4 bg-black text-white mt-4 hover:opacity-80'>Sign In</button>
-        </form>
+    <>
+      <div className="text-center">
+        <Link to="/" className="gradient-text text-2xl font-extrabold">ShopVerse</Link>
+        <p className="mt-1 text-sm text-muted">Sign in to continue shopping</p>
       </div>
-      {error && <p className='text-lg text-red-700'>{error}</p>}
-      <Link to={"/v1/register"} className='underline text-gray-500 hover:text-black'>Don’t have an account? Sign up</Link>
-    </div>
+
+      <form onSubmit={onSubmit} className="mt-6 space-y-4">
+        <div>
+          <label className="label" htmlFor="login-email">Email</label>
+          <input id="login-email" type="email" name="userName" value={values.userName} onChange={onChange}
+                 autoComplete="email" className="input" required />
+        </div>
+        <div>
+          <label className="label" htmlFor="login-password">Password</label>
+          <input id="login-password" type="password" name="password" value={values.password} onChange={onChange}
+                 autoComplete="current-password" className="input" required />
+        </div>
+        {error && <p className="text-sm font-semibold text-red-400">{error}</p>}
+        <button type="submit" className="btn-primary w-full">Sign in</button>
+      </form>
+
+      <div className="my-5 flex items-center gap-3 text-xs text-muted">
+        <span className="h-px flex-1 bg-line" /> OR <span className="h-px flex-1 bg-line" />
+      </div>
+      <GoogleSignIn />
+
+      <p className="mt-6 text-center text-sm text-muted">
+        New to ShopVerse? <Link to={`/v1/register${redirect !== '/' ? `?redirect=${encodeURIComponent(redirect)}` : ''}`} className="font-semibold text-brand-pink hover:underline">Create an account</Link>
+      </p>
+      <p className="mt-2 text-center text-sm">
+        <Link to="/" className="text-muted hover:text-white">Continue as guest</Link>
+      </p>
+    </>
   )
 }
 
