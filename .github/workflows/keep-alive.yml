@@ -1,0 +1,19 @@
+name: Keep live demo awake
+
+# Render's free plan puts the API to sleep after 15 idle minutes, and the first
+# visit then waits about a minute. Pinging /api/ping every 10 minutes keeps it awake.
+# /api/ping does not query the database, so Neon can still sleep when idle.
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping API
+        run: curl --fail --silent --show-error --retry 3 --retry-delay 20 --max-time 90 https://shopverse-api-69m2.onrender.com/api/ping
+      - name: Ping storefront
+        run: curl --fail --silent --show-error --output /dev/null --max-time 60 https://shopverse-web-lf22.onrender.com/

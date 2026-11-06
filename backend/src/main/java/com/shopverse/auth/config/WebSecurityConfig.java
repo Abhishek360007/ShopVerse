@@ -40,7 +40,7 @@ public class WebSecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests((authorize)-> authorize
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
-                .requestMatchers(HttpMethod.GET,"/api/products","/api/category").permitAll()
+                .requestMatchers(HttpMethod.GET,"/api/products","/api/category","/api/ping").permitAll()
                         .requestMatchers("/oauth2/success").permitAll()
                 // Let error responses (400/404/500) through instead of redirecting to the login page
                 .requestMatchers("/error").permitAll()

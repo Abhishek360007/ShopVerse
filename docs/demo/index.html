@@ -65,6 +65,9 @@
   li b { color: var(--text); font-weight: 600; }
   li span { flex-shrink: 0; color: var(--accent); font-weight: 700; font-size: 13px; min-width: 22px; }
   footer { margin-top: 48px; color: var(--faint); font-size: 14px; }
+  .status { display: inline-flex; align-items: center; gap: 8px; color: var(--faint); font-size: 13px; margin: -28px 0 40px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2); }
+  .dot.ready { background: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); }
 </style>
 </head>
 <body>
@@ -85,6 +88,7 @@
     <a href="https://shopverse-web-lf22.onrender.com">Live app</a>
     <a href="../ShopVerse-Project-Guide.pdf">Project guide (PDF)</a>
   </div>
+  <p class="status" aria-live="polite"><span class="dot" id="dot"></span><span id="status">Live app: waking up the server…</span></p>
 
   <h2>What the video shows</h2>
   <ol>
@@ -105,5 +109,19 @@
 
   <footer>Built by Abhishek Raj · Java 25 · Spring Boot 4 · Spring Security · React 18 · Tailwind CSS · PostgreSQL · Docker</footer>
 </main>
+<script>
+  // Wake the live app's API while the visitor watches the demo (free hosting sleeps when idle).
+  (function () {
+    var dot = document.getElementById('dot'), label = document.getElementById('status');
+    var tries = 0;
+    function ping() {
+      tries++;
+      fetch('https://shopverse-api-69m2.onrender.com/api/ping', { cache: 'no-store' })
+        .then(function (r) { if (!r.ok) throw new Error(r.status); dot.classList.add('ready'); label.textContent = 'Live app: ready'; })
+        .catch(function () { if (tries < 12) setTimeout(ping, 5000); else label.textContent = 'Live app: still starting, it can take a minute'; });
+    }
+    ping();
+  })();
+</script>
 </body>
 </html>

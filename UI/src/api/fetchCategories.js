@@ -1,17 +1,12 @@
-import axios from "axios";
 import { API_BASE_URL, API_URLS } from "./constant"
-
+import { getWithWakeup } from "./warmup";
 
 export const fetchCategories = async()=> {
-    const url = API_BASE_URL + API_URLS.GET_CATEGORIES;
-
     try{
-        const result = await axios(url,{
-            method:'GET'
-        });
+        const result = await getWithWakeup(API_BASE_URL + API_URLS.GET_CATEGORIES);
         return result?.data;
     }
     catch(e){
-        console.log(e);
+        console.error(e);
     }
 }
