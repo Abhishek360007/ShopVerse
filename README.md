@@ -4,6 +4,10 @@
 
 [![CI](https://github.com/Abhishek360007/ShopVerse/actions/workflows/ci.yml/badge.svg)](https://github.com/Abhishek360007/ShopVerse/actions/workflows/ci.yml)
 
+**[▶ Watch the demo](https://abhishek360007.github.io/ShopVerse/demo/)** · **[Live app](https://shopverse-web-lf22.onrender.com)** · **[Project guide (PDF)](ShopVerse-Project-Guide.pdf)**
+
+[![ShopVerse demo](demo/demo-preview.gif)](https://abhishek360007.github.io/ShopVerse/demo/)
+
 ShopVerse is a full-stack e-commerce web application built with **React.js** on the front end and **Spring Boot** on the back end. It covers the full online shopping flow: browsing six categories (Electronics, Fashion, Home & Kitchen, Books, Sports and Beauty), searching, managing a cart, signing in, checking out with a card (Stripe) or cash on delivery, and tracking orders. Prices are in Indian Rupees (₹). It also has an admin panel for managing products and categories.
 
 ## ✨ Features
@@ -175,14 +179,11 @@ GitHub Actions runs both test suites and a production build on every push and pu
 
 ### API Testing
 
-Import `ShopVerse.postman_collection.json` into Postman to try the API endpoints.
+Import `ShopVerse.postman_collection.json` into Postman. Set `baseUrl`, run **Auth → Login** (as a shopper) and **Auth → Login as admin**, and the tokens are saved for the other requests automatically.
 
-## 🙏 Acknowledgements
+## 🙏 Credits
 
-Product photos added for the extended catalog are CC0 / public domain; sources are listed in [UI/public/images/products/CREDITS.md](UI/public/images/products/CREDITS.md).
-
-
-ShopVerse builds on the open [ShopEase tutorial project](https://github.com/pardeep16/shopEase) by Pardeep Kumar ([TheCodeReveal](https://www.youtube.com/@thecodereveal)).
+Product photos are CC0 / public domain; sources are listed in [UI/public/images/products/CREDITS.md](UI/public/images/products/CREDITS.md).
 
 ## 👤 Author
 
