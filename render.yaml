@@ -27,7 +27,7 @@ services:
       - key: DB_SSLMODE
         value: require         # Neon only accepts encrypted connections
       - key: FRONTEND_URL
-        fromService: { name: shopverse-web, type: web, property: host }
+        value: https://shopverse-web-lf22.onrender.com   # public address of shopverse-web
       - key: JWT_KEY
         generateValue: true    # random secret, created once
       - key: ADMIN_EMAIL
@@ -71,7 +71,7 @@ services:
       - key: GENERATE_SOURCEMAP
         value: "false"
       - key: REACT_APP_API_BASE_URL
-        fromService: { name: shopverse-api, type: web, property: host }
+        value: https://shopverse-api-69m2.onrender.com   # public address of shopverse-api
       - key: REACT_APP_GOOGLE_LOGIN
         value: "false"
       - key: REACT_APP_STRIPE_KEY

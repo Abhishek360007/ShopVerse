@@ -155,6 +155,7 @@ The database runs on [Neon](https://neon.tech) (free PostgreSQL, no expiry) and 
 2. Click **New → Blueprint** and select the **ShopVerse** repository.
 3. Fill in `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` (from Neon) and `ADMIN_EMAIL` (your admin email), then click **Apply**.
 4. Wait for **shopverse-api** and **shopverse-web** to go live (the first build takes about 10 minutes).
+   If Render gave your services different addresses, put them in `render.yaml` (`FRONTEND_URL` = the shopverse-web address, `REACT_APP_API_BASE_URL` = the shopverse-api address) and push.
 5. Open the **shopverse-web** URL, sign up with your `ADMIN_EMAIL`, and you'll see **Manage store** on your account page.
 
 The tables and starter catalog are created automatically on first start. On Render's free plan the API sleeps after 15 minutes without visitors, so the first page load after a break can take about a minute.
