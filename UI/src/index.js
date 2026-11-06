@@ -1,11 +1,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
+import { getInitialTheme } from './utils/theme';
 import reportWebVitals from './reportWebVitals';
 import { RouterProvider } from 'react-router-dom';
 import { router } from './routes';
 import { Provider } from 'react-redux';
 import store from './store/store';
+
+// Use the saved theme or the device setting (saved only when the visitor toggles)
+document.documentElement.dataset.theme = getInitialTheme();
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

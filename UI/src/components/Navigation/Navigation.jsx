@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import { countCartItems } from '../../store/features/cart';
 import { isTokenValid } from '../../utils/jwt-helper';
 import { BagIcon, SearchIcon, UserIcon } from '../common/Icons';
+import ThemeToggle from '../ThemeToggle/ThemeToggle';
 
 const Navigation = () => {
   const cartCount = useSelector(countCartItems);
@@ -46,7 +47,8 @@ const Navigation = () => {
           </label>
         </form>
 
-        <nav className="ml-auto flex items-center gap-5">
+        <nav className="ml-auto flex items-center gap-4">
+          <ThemeToggle />
           {loggedIn ? (
             <Link to="/account-details/profile" className="flex items-center gap-2 text-sm font-semibold hover:text-brand-pink">
               <UserIcon className="h-5 w-5" /> Account
@@ -59,11 +61,11 @@ const Navigation = () => {
           <Link
             to="/cart-items"
             aria-label={`Cart, ${cartCount} items`}
-            className="relative flex h-10 w-12 items-center justify-center rounded-full bg-gradient-to-r from-brand-purple to-brand-pink hover:brightness-110"
+            className="relative flex h-10 w-12 items-center justify-center rounded-full bg-gradient-to-r from-brand-purple to-brand-pink text-white hover:brightness-110"
           >
             <BagIcon className="h-5 w-5" />
             {cartCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-xs font-bold text-ink">
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-xs font-bold text-neutral-900">
                 {cartCount}
               </span>
             )}

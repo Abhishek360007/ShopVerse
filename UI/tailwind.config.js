@@ -1,14 +1,19 @@
 /** @type {import('tailwindcss').Config} */
+
+// Theme colours come from CSS variables (see index.css) so light/dark can switch at runtime.
+const themed = (name) => `rgb(var(--${name}) / <alpha-value>)`;
+
 module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        ink: '#0b0a12',        // page background
-        surface: '#15141d',    // cards
-        raised: '#1d1b27',     // inputs, chips, hover states
-        line: 'rgba(255,255,255,0.08)',
-        muted: '#a1a1b5',
+        ink: themed('ink'),         // page background
+        surface: themed('surface'), // cards
+        raised: themed('raised'),   // inputs, chips, hover states
+        fg: themed('fg'),           // main text
+        muted: themed('muted'),     // secondary text
+        line: 'rgb(var(--fg) / 0.1)',
         brand: {
           purple: '#a855f7',
           pink: '#ec4899',

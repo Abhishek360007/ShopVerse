@@ -64,7 +64,7 @@ const Login = () => {
         New to ShopVerse? <Link to={`/v1/register${redirect !== '/' ? `?redirect=${encodeURIComponent(redirect)}` : ''}`} className="font-semibold text-brand-pink hover:underline">Create an account</Link>
       </p>
       <p className="mt-2 text-center text-sm">
-        <Link to="/" className="text-muted hover:text-white">Continue as guest</Link>
+        <Link to="/" className="text-muted hover:text-fg">Continue as guest</Link>
       </p>
     </>
   )

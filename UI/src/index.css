@@ -9,10 +9,28 @@
 @font-face { font-family: "Inter"; font-weight: 800; font-display: swap; src: url(assets/fonts/Inter-ExtraBold.ttf); }
 
 @layer base {
-  html { color-scheme: dark; }
+  /* Dark theme (default) */
+  :root {
+    color-scheme: dark;
+    --ink: 11 10 18;
+    --surface: 21 20 29;
+    --raised: 29 27 39;
+    --fg: 255 255 255;
+    --muted: 161 161 181;
+  }
+
+  /* Light theme */
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --ink: 248 247 252;
+    --surface: 255 255 255;
+    --raised: 241 239 247;
+    --fg: 20 18 31;
+    --muted: 100 98 120;
+  }
 
   body {
-    @apply bg-ink text-white font-sans antialiased;
+    @apply bg-ink text-fg font-sans antialiased;
     margin: 0;
     min-height: 100vh;
     /* soft brand glows behind the page */
@@ -45,20 +63,20 @@
     @apply btn bg-gradient-to-r from-brand-blue to-brand-purple text-white hover:brightness-110;
   }
   .btn-ghost {
-    @apply btn border border-line bg-raised text-white hover:bg-white/10;
+    @apply btn border border-line bg-raised text-fg hover:bg-fg/10;
   }
 
   .chip {
     @apply inline-flex items-center rounded-full border border-line bg-raised px-4 py-2 text-sm font-semibold
-           text-white transition hover:border-brand-purple/60 hover:bg-white/10;
+           text-fg transition hover:border-brand-purple/60 hover:bg-fg/10;
   }
   .chip-active { @apply border-brand-purple bg-brand-purple/20; }
 
   .input {
-    @apply w-full rounded-xl border border-line bg-raised px-4 h-11 text-sm text-white placeholder-muted
+    @apply w-full rounded-xl border border-line bg-raised px-4 h-11 text-sm text-fg placeholder-muted
            outline-none transition focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30;
   }
-  .label { @apply mb-1.5 block text-sm font-semibold text-white; }
+  .label { @apply mb-1.5 block text-sm font-semibold text-fg; }
 
   .icon-tile {
     @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-xl

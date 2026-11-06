@@ -18,11 +18,11 @@ const OrderConfirmed = () => {
             : 'Your payment was successful and your order is being processed.'}
         </p>
         {orderId && orderId !== 'undefined' && (
-          <p className="mt-3 break-all text-xs text-muted">Order ID: <span className="text-white">{orderId}</span></p>
+          <p className="mt-3 break-all text-xs text-muted">Order ID: <span className="text-fg">{orderId}</span></p>
         )}
         <div className="mt-6 flex flex-col gap-2">
           <Link to="/" className="btn-primary">Continue shopping</Link>
-          <Link to="/account-details/orders" className="text-sm text-muted hover:text-white">View my orders</Link>
+          <Link to="/account-details/orders" className="text-sm text-muted hover:text-fg">View my orders</Link>
         </div>
       </div>
     </div>

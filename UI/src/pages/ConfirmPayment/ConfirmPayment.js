@@ -38,7 +38,7 @@ const ConfirmPayment = () => {
           </>
         ) : (
           <>
-            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-white/15 border-t-brand-pink" />
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-fg/15 border-t-brand-pink" />
             <p className="mt-4 font-semibold">Confirming your payment…</p>
           </>
         )}

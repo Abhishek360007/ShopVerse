@@ -30,7 +30,7 @@ const ProductCard = ({ product }) => {
           loading="lazy"
           className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
         />
-        <span className="absolute right-3 top-3 rounded-full bg-brand-purple px-3 py-1 text-xs font-bold shadow-lg">
+        <span className="absolute right-3 top-3 rounded-full bg-brand-purple px-3 py-1 text-xs font-bold text-white shadow-lg">
           {formatPrice(product?.price)}
         </span>
       </Link>

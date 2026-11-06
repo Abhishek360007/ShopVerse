@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react'
-import { Admin, defaultDarkTheme, fetchUtils, Resource, withLifecycleCallbacks } from 'react-admin'
+import { Admin, defaultDarkTheme, defaultLightTheme, fetchUtils, Resource, withLifecycleCallbacks } from 'react-admin'
 import simpleRestProvider from "ra-data-simple-rest";
 import CategoryIcon from '@mui/icons-material/Category';
 import InventoryIcon from '@mui/icons-material/Inventory2';
@@ -14,6 +14,7 @@ import OrderEdit from './Orders/OrderEdit';
 import Dashboard from './Dashboard';
 import { fileUploadAPI } from '../../api/fileUpload';
 import { API_BASE_URL } from '../../api/constant';
+import { currentTheme } from '../../utils/theme';
 
 // Base URL of the storage zone that uploaded product images are served from
 const CDN_URL = process.env.REACT_APP_CDN_URL || '';
@@ -96,7 +97,18 @@ const dataProvider = {
   update: forResource('update'),
 };
 
-// Dark admin theme in the ShopVerse colours
+// Admin themes in the ShopVerse colours (react-admin shows its own light/dark switch)
+const adminLightTheme = {
+  ...defaultLightTheme,
+  palette: {
+    ...defaultLightTheme.palette,
+    primary: { main: '#9333ea' },
+    secondary: { main: '#db2777' },
+    background: { default: '#f8f7fc', paper: '#ffffff' },
+  },
+  typography: { ...defaultLightTheme.typography, fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif' },
+};
+
 const adminTheme = {
   ...defaultDarkTheme,
   palette: {
@@ -114,7 +126,8 @@ export const AdminPanel = () => {
   const AdminDashboard = useCallback(() => <Dashboard fetchStats={fetchStats} />, [fetchStats]);
 
   return (
-    <Admin dataProvider={dataProvider} basename='/admin' theme={adminTheme} dashboard={AdminDashboard} title="ShopVerse admin">
+    <Admin dataProvider={dataProvider} basename='/admin' theme={adminLightTheme} darkTheme={adminTheme}
+           defaultTheme={currentTheme()} dashboard={AdminDashboard} title="ShopVerse admin">
       <Resource name='orders' list={OrderList} edit={OrderEdit} icon={ReceiptLongIcon} options={{ label: 'Orders' }}/>
       <Resource name='products' list={ProductList} edit={EditProduct} create={CreateProduct} icon={InventoryIcon} options={{ label: 'Products' }}/>
       <Resource name='category' list={CategoryList} edit={CategoryEdit} icon={CategoryIcon} options={{ label: 'Categories' }}/>

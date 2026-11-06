@@ -14,7 +14,7 @@ const Footer = () => {
           <ul className="flex flex-wrap justify-center gap-x-5 gap-y-1 text-sm text-muted">
             {categories.map((category) => (
               <li key={category.id}>
-                <Link to={`/category/${category.code}`} className="hover:text-white">{category.name}</Link>
+                <Link to={`/category/${category.code}`} className="hover:text-fg">{category.name}</Link>
               </li>
             ))}
           </ul>

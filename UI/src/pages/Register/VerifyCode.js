@@ -37,7 +37,7 @@ const VerifyCode = ({ email, loginLink = '/v1/login' }) => {
     <>
       <div className="text-center">
         <p className="gradient-text text-2xl font-extrabold">Check your email</p>
-        <p className="mt-2 text-sm text-muted">We sent a 6-digit code to <span className="font-semibold text-white">{email}</span>.</p>
+        <p className="mt-2 text-sm text-muted">We sent a 6-digit code to <span className="font-semibold text-fg">{email}</span>.</p>
       </div>
       <form onSubmit={onSubmit} className="mt-6 space-y-4">
         <div>

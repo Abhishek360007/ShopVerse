@@ -8,7 +8,7 @@ ShopVerse is a full-stack e-commerce web application built with **React.js** on 
 
 ## ✨ Features
 
-- 🌙 Dark, responsive storefront with a purple–pink theme
+- 🌗 Responsive storefront with light and dark themes (remembers your choice, follows your device by default)
 - 🔎 Product search plus category pages with type filters
 - 📦 Product pages with size options, stock checks and similar products
 - 🛍️ Cart that merges repeat items and respects available stock
@@ -20,7 +20,7 @@ ShopVerse is a full-stack e-commerce web application built with **React.js** on 
 - 🚚 Admin order management: filter orders, view details and move them through Pending → In progress → Shipped → Delivered (or cancel)
 - 📦 Stock goes down when an order is placed and back up when it is cancelled
 - 🛠️ Admin panel (react-admin) for products and categories, restricted to admins
-- 🌱 Starter catalog loaded automatically on a fresh database
+- 🌱 Starter catalog of 18 products across 6 categories, added automatically in versioned batches (products you delete stay deleted)
 - 📖 API documentation through Swagger / OpenAPI
 - 🐳 One-command setup with Docker Compose
 - ✅ Unit tests and GitHub Actions CI for the backend and frontend
@@ -176,6 +176,9 @@ GitHub Actions runs both test suites and a production build on every push and pu
 Import `ShopVerse.postman_collection.json` into Postman to try the API endpoints.
 
 ## 🙏 Acknowledgements
+
+Product photos added for the extended catalog are CC0 / public domain; sources are listed in [UI/public/images/products/CREDITS.md](UI/public/images/products/CREDITS.md).
+
 
 ShopVerse builds on the open [ShopEase tutorial project](https://github.com/pardeep16/shopEase) by Pardeep Kumar ([TheCodeReveal](https://www.youtube.com/@thecodereveal)).
 

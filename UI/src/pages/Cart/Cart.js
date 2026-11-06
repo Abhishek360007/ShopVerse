@@ -62,7 +62,7 @@ const Cart = () => {
                       {variantLabel(item?.variant) && <p className="text-sm text-muted">{variantLabel(item?.variant)}</p>}
                     </div>
                     <button type="button" aria-label={`Remove ${item?.name}`} onClick={() => setPendingRemoval(item)}
-                            className="rounded-lg p-1.5 text-muted hover:bg-white/10 hover:text-white">
+                            className="rounded-lg p-1.5 text-muted hover:bg-fg/10 hover:text-fg">
                       <TrashIcon className="h-5 w-5" />
                     </button>
                   </div>
@@ -96,7 +96,7 @@ const Cart = () => {
           {isTokenValid()
             ? <button type="button" className="btn-primary mt-6 w-full" onClick={() => navigate('/checkout')}>Proceed to checkout</button>
             : <Link to="/v1/login?redirect=/checkout" className="btn-primary mt-6 w-full">Sign in to checkout</Link>}
-          <Link to="/" className="mt-3 block text-center text-sm text-muted hover:text-white">Continue shopping</Link>
+          <Link to="/" className="mt-3 block text-center text-sm text-muted hover:text-fg">Continue shopping</Link>
         </aside>
       </div>
 

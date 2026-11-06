@@ -39,7 +39,7 @@ const Account = () => {
         <nav className="flex gap-2 overflow-x-auto md:flex-col" aria-label="Account">
           {links.map(({ to, label, icon: Icon }) => (
             <NavLink key={to} to={to}
-              className={({ isActive }) => `flex shrink-0 items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition ${isActive ? 'bg-gradient-to-r from-brand-purple to-brand-pink' : 'bg-surface text-muted hover:text-white'}`}>
+              className={({ isActive }) => `flex shrink-0 items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition ${isActive ? 'bg-gradient-to-r from-brand-purple to-brand-pink text-white' : 'bg-surface text-muted hover:text-fg'}`}>
               <Icon className="h-4 w-4" /> {label}
             </NavLink>
           ))}

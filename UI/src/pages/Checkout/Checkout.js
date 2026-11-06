@@ -76,7 +76,7 @@ const Checkout = () => {
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {addresses.map((address) => (
                   <label key={address.id}
-                         className={`cursor-pointer rounded-2xl border p-4 text-sm transition ${addressId === address.id ? 'border-brand-purple bg-brand-purple/10' : 'border-line bg-raised hover:border-white/20'}`}>
+                         className={`cursor-pointer rounded-2xl border p-4 text-sm transition ${addressId === address.id ? 'border-brand-purple bg-brand-purple/10' : 'border-line bg-raised hover:border-fg/20'}`}>
                     <input type="radio" name="address" className="sr-only" checked={addressId === address.id}
                            onChange={() => setAddressId(address.id)} />
                     <p className="font-bold">{address.name}</p>
@@ -97,7 +97,7 @@ const Checkout = () => {
                 { value: 'COD', title: 'Cash on delivery', text: 'Pay when your order arrives' },
               ].map((option) => (
                 <label key={option.value}
-                       className={`rounded-2xl border p-4 text-sm transition ${option.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${paymentMethod === option.value ? 'border-brand-purple bg-brand-purple/10' : 'border-line bg-raised hover:border-white/20'}`}>
+                       className={`rounded-2xl border p-4 text-sm transition ${option.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${paymentMethod === option.value ? 'border-brand-purple bg-brand-purple/10' : 'border-line bg-raised hover:border-fg/20'}`}>
                   <input type="radio" name="payment" className="sr-only" disabled={option.disabled}
                          checked={paymentMethod === option.value} onChange={() => setPaymentMethod(option.value)} />
                   <p className="font-bold">{option.title}</p>

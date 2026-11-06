@@ -7,7 +7,7 @@ const Rating = ({rating}) => {
   return (
     <div className="flex items-center gap-1" aria-label={`Rated ${value} out of 5`}>
       {[1, 2, 3, 4, 5].map((n) => (
-        <StarIcon key={n} filled={n <= full} className={`h-4 w-4 ${n <= full ? 'text-amber-400' : 'text-white/25'}`} />
+        <StarIcon key={n} filled={n <= full} className={`h-4 w-4 ${n <= full ? 'text-amber-400' : 'text-fg/25'}`} />
       ))}
       <span className="ml-1 text-sm text-muted">{value.toFixed(1)}</span>
     </div>

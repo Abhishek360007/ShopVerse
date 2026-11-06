@@ -28,7 +28,7 @@ const Shop = () => {
         <h1 className="mt-4 max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
           Shop smarter across <span className="gradient-text">every category</span>
         </h1>
-        <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/80">
+        <p className="mt-5 max-w-2xl text-lg leading-relaxed text-fg/80">
           Electronics, fashion, home essentials, books, sports gear and beauty — all in one place with secure
           checkout and fast delivery.
         </p>

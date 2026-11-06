@@ -72,8 +72,8 @@ const ProductDetails = () => {
   return (
     <div className="shell py-8">
       <nav className="mb-6 text-sm text-muted" aria-label="Breadcrumb">
-        <Link to="/" className="hover:text-white">Shop</Link>
-        {category && <> <span className="mx-2">/</span><Link to={`/category/${category.code}`} className="hover:text-white">{category.name}</Link></>}
+        <Link to="/" className="hover:text-fg">Shop</Link>
+        {category && <> <span className="mx-2">/</span><Link to={`/category/${category.code}`} className="hover:text-fg">{category.name}</Link></>}
       </nav>
 
       <div className="grid gap-10 lg:grid-cols-2">
@@ -100,7 +100,7 @@ const ProductDetails = () => {
           <p className="mt-5 text-3xl font-extrabold">{formatPrice(product.price)}</p>
           <p className="mt-1 text-sm text-muted">Inclusive of all taxes</p>
 
-          <p className="mt-6 leading-relaxed text-white/80">{product.description}</p>
+          <p className="mt-6 leading-relaxed text-fg/80">{product.description}</p>
 
           {hasChoice && (
             <fieldset className="mt-6">
@@ -117,7 +117,7 @@ const ProductDetails = () => {
             </fieldset>
           )}
           {selected?.color && selected.color !== 'Standard' && (
-            <p className="mt-4 text-sm text-muted">Colour: <span className="font-semibold text-white">{selected.color}</span></p>
+            <p className="mt-4 text-sm text-muted">Colour: <span className="font-semibold text-fg">{selected.color}</span></p>
           )}
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
