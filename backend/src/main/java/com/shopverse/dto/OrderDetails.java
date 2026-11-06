@@ -25,5 +25,9 @@ public class OrderDetails {
     private String shipmentNumber;
     private Date expectedDeliveryDate;
     private List<OrderItemDetail> orderItemList;
+    private String paymentMethod;
+    private com.shopverse.entities.PaymentStatus paymentStatus;
+    private List<StatusEventDto> statusHistory;
+    private boolean cancellable;
 
 }

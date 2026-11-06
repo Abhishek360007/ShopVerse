@@ -32,4 +32,6 @@ public class AdminOrderDto {
     private String phoneNumber;
     private String shippingAddress;
     private List<AdminOrderItemDto> items;
+    private String trackingNumber;
+    private List<StatusEventDto> statusHistory;
 }

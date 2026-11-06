@@ -16,26 +16,28 @@ import static org.junit.jupiter.api.Assertions.*;
 class OrderStatusRulesTest {
 
     @Test
-    void ordersMoveForward() {
-        assertTrue(OrderStatusRules.canChange(PENDING, IN_PROGRESS));
-        assertTrue(OrderStatusRules.canChange(IN_PROGRESS, SHIPPED));
-        assertTrue(OrderStatusRules.canChange(SHIPPED, DELIVERED));
+    void ordersMoveForwardThroughEveryStep() {
+        assertTrue(OrderStatusRules.canChange(PENDING, CONFIRMED));
+        assertTrue(OrderStatusRules.canChange(CONFIRMED, PACKED));
+        assertTrue(OrderStatusRules.canChange(PACKED, SHIPPED));
+        assertTrue(OrderStatusRules.canChange(SHIPPED, OUT_FOR_DELIVERY));
+        assertTrue(OrderStatusRules.canChange(OUT_FOR_DELIVERY, DELIVERED));
     }
 
     @Test
-    void cannotGoBackwardsOrSkipToDelivered() {
-        assertFalse(OrderStatusRules.canChange(SHIPPED, PENDING));
-        assertFalse(OrderStatusRules.canChange(PENDING, DELIVERED));
+    void adminMaySkipAheadButNotGoBack() {
+        assertTrue(OrderStatusRules.canChange(PENDING, SHIPPED));
+        assertFalse(OrderStatusRules.canChange(SHIPPED, PACKED));
+        assertFalse(OrderStatusRules.canChange(OUT_FOR_DELIVERY, PENDING));
     }
 
     @Test
     void cancelOnlyBeforeShipping() {
-        assertTrue(OrderStatusRules.canChange(PENDING, CANCELLED));
-        assertTrue(OrderStatusRules.canChange(IN_PROGRESS, CANCELLED));
+        assertTrue(OrderStatusRules.canChange(PACKED, CANCELLED));
         assertFalse(OrderStatusRules.canChange(SHIPPED, CANCELLED));
-        assertTrue(OrderStatusRules.customerCanCancel(PENDING));
+        assertFalse(OrderStatusRules.canChange(OUT_FOR_DELIVERY, CANCELLED));
+        assertTrue(OrderStatusRules.customerCanCancel(CONFIRMED));
         assertFalse(OrderStatusRules.customerCanCancel(SHIPPED));
-        assertFalse(OrderStatusRules.customerCanCancel(DELIVERED));
     }
 
     @Test
@@ -43,6 +45,21 @@ class OrderStatusRulesTest {
         assertTrue(OrderStatusRules.nextStatuses(DELIVERED).isEmpty());
         assertTrue(OrderStatusRules.nextStatuses(CANCELLED).isEmpty());
         assertFalse(OrderStatusRules.canChange(CANCELLED, PENDING));
+    }
+
+    @Test
+    void nextStatusesFromShipped() {
+        assertEquals(java.util.EnumSet.of(OUT_FOR_DELIVERY, DELIVERED), OrderStatusRules.nextStatuses(SHIPPED));
+    }
+
+    @Test
+    void changeStatusRecordsHistory() {
+        Order order = Order.builder().orderStatus(PENDING).build();
+        order.changeStatus(CONFIRMED, "Payment received");
+        order.changeStatus(PACKED, null);
+        assertEquals(PACKED, order.getOrderStatus());
+        assertEquals(List.of(CONFIRMED, PACKED), order.getStatusHistory().stream().map(e -> e.getStatus()).toList());
+        assertNotNull(order.getStatusHistory().get(0).getCreatedAt());
     }
 
     @Test

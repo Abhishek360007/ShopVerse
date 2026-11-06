@@ -4,6 +4,7 @@ import com.shopverse.auth.entities.User;
 import com.shopverse.dto.AdminOrderDto;
 import com.shopverse.dto.AdminOrderItemDto;
 import com.shopverse.dto.OrderStatsDto;
+import com.shopverse.dto.StatusEventDto;
 import com.shopverse.entities.Address;
 import com.shopverse.entities.Order;
 import com.shopverse.entities.OrderItem;
@@ -54,7 +55,7 @@ public class AdminOrderService {
     }
 
     @Transactional
-    public AdminOrderDto updateStatus(UUID id, OrderStatus newStatus) {
+    public AdminOrderDto updateStatus(UUID id, OrderStatus newStatus, String note, String trackingNumber) {
         if (newStatus == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Choose an order status");
         }
@@ -64,8 +65,11 @@ public class AdminOrderService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "An order that is " + label(current) + " can't be changed to " + label(newStatus));
         }
+        if (trackingNumber != null) {
+            order.setShipmentTrackingNumber(trackingNumber.isBlank() ? null : trackingNumber.trim());
+        }
         if (current != newStatus) {
-            order.setOrderStatus(newStatus);
+            order.changeStatus(newStatus, note == null || note.isBlank() ? null : note.trim());
             Payment payment = order.getPayment();
             if (newStatus == OrderStatus.CANCELLED) {
                 OrderStock.restore(order);
@@ -88,8 +92,10 @@ public class AdminOrderService {
         return OrderStatsDto.builder()
                 .totalOrders(total)
                 .toShip(orderRepository.countByOrderStatus(OrderStatus.PENDING)
-                        + orderRepository.countByOrderStatus(OrderStatus.IN_PROGRESS))
-                .shipped(orderRepository.countByOrderStatus(OrderStatus.SHIPPED))
+                        + orderRepository.countByOrderStatus(OrderStatus.CONFIRMED)
+                        + orderRepository.countByOrderStatus(OrderStatus.PACKED))
+                .shipped(orderRepository.countByOrderStatus(OrderStatus.SHIPPED)
+                        + orderRepository.countByOrderStatus(OrderStatus.OUT_FOR_DELIVERY))
                 .delivered(orderRepository.countByOrderStatus(OrderStatus.DELIVERED))
                 .cancelled(cancelled)
                 .revenue(round(revenue))
@@ -125,6 +131,8 @@ public class AdminOrderService {
                 .shippingAddress(address == null ? null : joinNonBlank(", ", address.getName(), address.getStreet(),
                         address.getCity(), address.getState(), address.getZipCode()))
                 .items(items.stream().map(this::toItemDto).toList())
+                .trackingNumber(order.getShipmentTrackingNumber())
+                .statusHistory(StatusEventDto.historyOf(order.getStatusHistory(), order.getOrderDate(), order.getOrderStatus()))
                 .build();
     }
 

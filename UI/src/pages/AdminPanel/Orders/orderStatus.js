@@ -2,17 +2,21 @@ import React from 'react';
 import { Chip } from '@mui/material';
 
 export const STATUS_LABELS = {
-  PENDING: 'Pending',
-  IN_PROGRESS: 'In progress',
+  PENDING: 'Placed',
+  CONFIRMED: 'Confirmed',
+  PACKED: 'Packed',
   SHIPPED: 'Shipped',
+  OUT_FOR_DELIVERY: 'Out for delivery',
   DELIVERED: 'Delivered',
   CANCELLED: 'Cancelled',
 };
 
 const STATUS_COLORS = {
   PENDING: 'warning',
-  IN_PROGRESS: 'info',
+  CONFIRMED: 'info',
+  PACKED: 'info',
   SHIPPED: 'secondary',
+  OUT_FOR_DELIVERY: 'secondary',
   DELIVERED: 'success',
   CANCELLED: 'default',
 };

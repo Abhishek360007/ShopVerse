@@ -1,4 +1,4 @@
-import { createOrderRequest, getStepCount } from './order-util';
+import { createOrderRequest, getStepCount, orderGroup } from './order-util';
 
 const cartItems = [
   { productId: 'p1', variant: { id: 'v1' }, quantity: 2, subTotal: 40.5 },
@@ -35,10 +35,22 @@ describe('createOrderRequest', () => {
 });
 
 describe('getStepCount', () => {
-  it('maps order statuses to timeline steps', () => {
+  it('maps every delivery step in order', () => {
     expect(getStepCount.PENDING).toBe(1);
-    expect(getStepCount.IN_PROGRESS).toBe(2);
-    expect(getStepCount.SHIPPED).toBe(3);
-    expect(getStepCount.DELIVERED).toBe(4);
+    expect(getStepCount.CONFIRMED).toBe(2);
+    expect(getStepCount.PACKED).toBe(3);
+    expect(getStepCount.SHIPPED).toBe(4);
+    expect(getStepCount.OUT_FOR_DELIVERY).toBe(5);
+    expect(getStepCount.DELIVERED).toBe(6);
+    expect(getStepCount.CANCELLED).toBeUndefined();
+  });
+});
+
+describe('orderGroup', () => {
+  it('groups statuses for the order filter', () => {
+    expect(orderGroup('PACKED')).toBe('ACTIVE');
+    expect(orderGroup('OUT_FOR_DELIVERY')).toBe('ACTIVE');
+    expect(orderGroup('DELIVERED')).toBe('COMPLETED');
+    expect(orderGroup('CANCELLED')).toBe('CANCELLED');
   });
 });

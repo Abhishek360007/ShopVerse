@@ -71,3 +71,11 @@ export const cancelOrderAPI = async (id)=>{
         throw new Error(err);
     }
 }
+export const fetchOrderByIdAPI = async (id)=>{
+    const url = API_BASE_URL + `/api/order/${id}`;
+    const response = await axios(url,{
+        method:"GET",
+        headers:getHeaders()
+    });
+    return response?.data;
+}

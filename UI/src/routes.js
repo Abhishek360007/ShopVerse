@@ -3,6 +3,7 @@ import Shop from "./Shop";
 import ShopApplicationWrapper from "./pages/ShopApplicationWrapper";
 import ProductListPage from "./pages/ProductListPage/ProductListPage";
 import SearchPage from "./pages/SearchPage/SearchPage";
+import WishlistPage from "./pages/Wishlist/WishlistPage";
 import ProductDetails from "./pages/ProductDetailPage/ProductDetails";
 import { loadProductBySlug } from "./routes/products";
 import AuthenticationWrapper from "./pages/AuthenticationWrapper";
@@ -17,6 +18,7 @@ import ConfirmPayment from "./pages/ConfirmPayment/ConfirmPayment";
 import OrderConfirmed from "./pages/OrderConfirmed/OrderConfirmed";
 import Profile from "./pages/Account/Profile";
 import Orders from "./pages/Account/Orders";
+import OrderTracking from "./pages/Account/OrderTracking";
 import Settings from "./pages/Account/Settings";
 import { AdminPanel } from "./pages/AdminPanel/AdminPanel";
 
@@ -39,6 +41,10 @@ export const router = createBrowserRouter([
           element:<SearchPage />,
         },
         {
+          path:"/wishlist",
+          element:<WishlistPage />,
+        },
+        {
           path:"/product/:slug",
           loader: loadProductBySlug,
           element: <ProductDetails />
@@ -58,6 +64,10 @@ export const router = createBrowserRouter([
             {
               path:'orders',
               element:<ProtectedRoute><Orders/></ProtectedRoute>
+            },
+            {
+              path:'orders/:id',
+              element:<ProtectedRoute><OrderTracking/></ProtectedRoute>
             },
             {
               path:'settings',

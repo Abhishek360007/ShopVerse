@@ -52,6 +52,11 @@ public class OrderController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
+    @GetMapping("/{id}")
+    public OrderDetails getOrder(@PathVariable UUID id, Principal principal) {
+        return orderService.getOrderForUser(id, principal.getName());
+    }
+
     @GetMapping("/user")
     public ResponseEntity<List<OrderDetails>> getOrderByUser(Principal principal) {
         List<OrderDetails> orders = orderService.getOrdersByUser(principal.getName());

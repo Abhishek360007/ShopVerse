@@ -61,5 +61,20 @@ public class Order {
     @OneToOne(fetch = FetchType.LAZY,mappedBy = "order",cascade = CascadeType.ALL)
     @ToString.Exclude
     private Payment payment;
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("createdAt ASC")
+    @ToString.Exclude
+    @JsonIgnore
+    @Builder.Default
+    private List<OrderStatusEvent> statusHistory = new java.util.ArrayList<>();
+
+    /** Records a tracking step (and moves the order to that status). */
+    public void changeStatus(OrderStatus status, String note) {
+        this.orderStatus = status;
+        if (statusHistory == null) {
+            statusHistory = new java.util.ArrayList<>();
+        }
+        statusHistory.add(OrderStatusEvent.builder().order(this).status(status).note(note).createdAt(new Date()).build());
+    }
 
 }

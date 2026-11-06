@@ -8,6 +8,7 @@ import com.shopverse.auth.entities.User;
 import com.shopverse.dto.OrderDetails;
 import com.shopverse.dto.OrderItemDetail;
 import com.shopverse.dto.OrderRequest;
+import com.shopverse.dto.StatusEventDto;
 import com.shopverse.entities.*;
 import com.shopverse.repositories.OrderRepository;
 import jakarta.transaction.Transactional;
@@ -84,6 +85,7 @@ public class OrderService {
                 .paymentMethod("CARD".equals(orderRequest.getPaymentMethod()) ? "CARD" : "COD")
                 .orderStatus(OrderStatus.PENDING)
                 .build();
+        order.changeStatus(OrderStatus.PENDING, "Order placed");
         orderItems.forEach(orderItem -> orderItem.setOrder(order));
         order.setOrderItemList(orderItems);
         Payment payment=new Payment();
@@ -119,7 +121,9 @@ public class OrderService {
                payment.setPaymentStatus(PaymentStatus.COMPLETED);
                 payment.setPaymentMethod(paymentIntent.getPaymentMethod());
                 order.setPaymentMethod(paymentIntent.getPaymentMethod());
-                order.setOrderStatus(OrderStatus.IN_PROGRESS);
+                if (order.getOrderStatus() == OrderStatus.PENDING) {
+                    order.changeStatus(OrderStatus.CONFIRMED, "Payment received");
+                }
                 order.setPayment(payment);
                 Order savedOrder = orderRepository.save(order);
                 Map<String,String> map = new HashMap<>();
@@ -135,22 +139,41 @@ public class OrderService {
         }
     }
 
+    @Transactional
     public List<OrderDetails> getOrdersByUser(String name) {
         User user = (User) userDetailsService.loadUserByUsername(name);
-        List<Order> orders = orderRepository.findByUser(user);
-        return orders.stream().map(order -> {
-            return OrderDetails.builder()
-                    .id(order.getId())
-                    .orderDate(order.getOrderDate())
-                    .orderStatus(order.getOrderStatus())
-                    .shipmentNumber(order.getShipmentTrackingNumber())
-                    .address(order.getAddress())
-                    .totalAmount(order.getTotalAmount())
-                    .orderItemList(getItemDetails(order.getOrderItemList()))
-                    .expectedDeliveryDate(order.getExpectedDeliveryDate())
-                    .build();
-        }).toList();
+        return orderRepository.findByUser(user).stream()
+                .sorted(java.util.Comparator.comparing(Order::getOrderDate,
+                        java.util.Comparator.nullsLast(java.util.Comparator.reverseOrder())))
+                .map(this::toDetails)
+                .toList();
+    }
 
+    /** Tracking view of one order, for the customer who placed it. */
+    @Transactional
+    public OrderDetails getOrderForUser(UUID id, String name) {
+        User user = (User) userDetailsService.loadUserByUsername(name);
+        Order order = orderRepository.findById(id)
+                .filter(o -> o.getUser().getId().equals(user.getId()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+        return toDetails(order);
+    }
+
+    private OrderDetails toDetails(Order order) {
+        return OrderDetails.builder()
+                .id(order.getId())
+                .orderDate(order.getOrderDate())
+                .orderStatus(order.getOrderStatus())
+                .shipmentNumber(order.getShipmentTrackingNumber())
+                .address(order.getAddress())
+                .totalAmount(order.getTotalAmount())
+                .orderItemList(getItemDetails(order.getOrderItemList()))
+                .expectedDeliveryDate(order.getExpectedDeliveryDate())
+                .paymentMethod(order.getPaymentMethod())
+                .paymentStatus(order.getPayment() != null ? order.getPayment().getPaymentStatus() : null)
+                .statusHistory(StatusEventDto.historyOf(order.getStatusHistory(), order.getOrderDate(), order.getOrderStatus()))
+                .cancellable(OrderStatusRules.customerCanCancel(order.getOrderStatus()))
+                .build();
     }
 
     private List<OrderItemDetail> getItemDetails(List<OrderItem> orderItemList) {
@@ -177,7 +200,7 @@ public class OrderService {
         if (!OrderStatusRules.customerCanCancel(order.getOrderStatus())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This order has already shipped and can't be cancelled");
         }
-        order.setOrderStatus(OrderStatus.CANCELLED);
+        order.changeStatus(OrderStatus.CANCELLED, "Cancelled by you");
         OrderStock.restore(order);
         orderRepository.save(order);
     }

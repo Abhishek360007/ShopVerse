@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit, SaveButton, SelectInput, SimpleForm, Toolbar, useRecordContext } from 'react-admin';
+import { Edit, SaveButton, SelectInput, SimpleForm, TextInput, Toolbar, useRecordContext } from 'react-admin';
 import { Box, Divider, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import { formatPrice } from '../../../utils/format';
 import { STATUS_LABELS, StatusChip, paymentLabel, shortId } from './orderStatus';
@@ -66,6 +66,18 @@ const OrderSummary = () => {
           </TableRow>
         </TableBody>
       </Table>
+      <Typography variant="subtitle2" sx={{ mt: 3, mb: 1 }}>Status history</Typography>
+      <Stack spacing={0.5}>
+        {record.statusHistory?.map((event, index) => (
+          <Stack key={index} direction="row" spacing={2} alignItems="center">
+            <Box sx={{ width: 150 }}><StatusChip status={event.status} /></Box>
+            <Typography variant="body2" color="text.secondary" sx={{ width: 170 }}>
+              {event.at ? new Date(event.at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : '—'}
+            </Typography>
+            <Typography variant="body2">{event.note || ''}</Typography>
+          </Stack>
+        ))}
+      </Stack>
       <Divider sx={{ mt: 3 }} />
     </Box>
   );
@@ -84,8 +96,10 @@ const StatusInput = () => {
   }
   const choices = [record.orderStatus, ...next].map((id) => ({ id, name: STATUS_LABELS[id] ?? id }));
   return (
-    <Box>
-      <SelectInput source="orderStatus" label="Order status" choices={choices} sx={{ minWidth: 240 }} />
+    <Box sx={{ display: 'grid', gap: 1, maxWidth: 520 }}>
+      <SelectInput source="orderStatus" label="Order status" choices={choices} />
+      <TextInput source="trackingNumber" label="Courier tracking number (optional)" />
+      <TextInput source="note" label="Note shown to the customer (optional)" defaultValue="" />
       <Typography variant="caption" color="text.secondary" display="block">
         Cancelling puts the items back in stock. Marking a cash-on-delivery order as delivered marks it paid.
       </Typography>

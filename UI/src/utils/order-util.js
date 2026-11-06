@@ -30,9 +30,24 @@ export const createOrderRequest = (cartItems,userId,addressId,paymentMethod='CAR
 
 }
 
-export const getStepCount = {
-    'PENDING':1,
-    'IN_PROGRESS':2,
-    'SHIPPED':3,
-    'DELIVERED':4
-}
+/** The delivery steps, in order, with the words customers see. */
+export const ORDER_STEPS = [
+    { status: 'PENDING', label: 'Order placed', description: "We've received your order." },
+    { status: 'CONFIRMED', label: 'Confirmed', description: 'Your order has been confirmed.' },
+    { status: 'PACKED', label: 'Packed', description: 'Your items are packed and ready to ship.' },
+    { status: 'SHIPPED', label: 'Shipped', description: 'Your order is on its way.' },
+    { status: 'OUT_FOR_DELIVERY', label: 'Out for delivery', description: 'Our courier will deliver it today.' },
+    { status: 'DELIVERED', label: 'Delivered', description: 'Your order has been delivered.' },
+];
+
+export const STATUS_LABELS = {
+    ...Object.fromEntries(ORDER_STEPS.map((s) => [s.status, s.label])),
+    CANCELLED: 'Cancelled',
+};
+
+/** 1-based position of a status in the delivery steps (0 when cancelled/unknown). */
+export const getStepCount = Object.fromEntries(ORDER_STEPS.map((s, i) => [s.status, i + 1]));
+
+/** Groups used by the "My orders" filter. */
+export const orderGroup = (status) =>
+    status === 'DELIVERED' ? 'COMPLETED' : status === 'CANCELLED' ? 'CANCELLED' : 'ACTIVE';

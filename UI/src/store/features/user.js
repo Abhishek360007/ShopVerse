@@ -48,7 +48,8 @@ export const userSlice = createSlice({
                     if(order?.id === action?.payload){
                         return {
                             ...order,
-                            orderStatus:'CANCELLED'
+                            orderStatus:'CANCELLED',
+                            cancellable:false
                         }
                     }
                     return order;
