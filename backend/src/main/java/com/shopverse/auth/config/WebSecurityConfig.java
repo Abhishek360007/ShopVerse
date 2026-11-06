@@ -17,7 +17,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.http.HttpStatus;
 
 @Configuration
 @EnableWebSecurity
@@ -42,11 +44,17 @@ public class WebSecurityConfig {
                         .requestMatchers("/oauth2/success").permitAll()
                 // Let error responses (400/404/500) through instead of redirecting to the login page
                 .requestMatchers("/error").permitAll()
+                // Order management is for the store admin only
+                .requestMatchers("/api/orders", "/api/orders/**").hasAuthority("ADMIN")
                 // Catalog changes and file uploads are for the store admin only
                 .requestMatchers(HttpMethod.POST, "/api/products/**", "/api/category/**", "/api/file/**").hasAuthority("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/products/**", "/api/category/**").hasAuthority("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/products/**", "/api/category/**").hasAuthority("ADMIN")
                 .anyRequest().authenticated())
+                // API calls without a valid token get 401 instead of a redirect to the Google login page
+                .exceptionHandling(exceptions -> exceptions.defaultAuthenticationEntryPointFor(
+                        new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                        request -> request.getRequestURI().startsWith("/api/")))
                 .oauth2Login((oauth2login)-> oauth2login.defaultSuccessUrl("/oauth2/success").loginPage("/oauth2/authorization/google"))
                 //.exceptionHandling((exception)-> exception.authenticationEntryPoint(new RESTAuthenticationEntryPoint()))
                 .addFilterBefore(new JWTAuthenticationFilter(jwtTokenHelper,userDetailsService), UsernamePasswordAuthenticationFilter.class);

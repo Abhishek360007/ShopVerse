@@ -16,6 +16,9 @@ ShopVerse is a full-stack e-commerce web application built with **React.js** on 
 - 💳 Checkout with saved addresses, Stripe card payments or cash on delivery
 - 🧾 Order totals calculated on the server from catalog prices
 - 📜 Order history with a status timeline, cancellation and account settings
+- 📊 Admin dashboard with revenue and order stats
+- 🚚 Admin order management: filter orders, view details and move them through Pending → In progress → Shipped → Delivered (or cancel)
+- 📦 Stock goes down when an order is placed and back up when it is cancelled
 - 🛠️ Admin panel (react-admin) for products and categories, restricted to admins
 - 🌱 Starter catalog loaded automatically on a fresh database
 - 📖 API documentation through Swagger / OpenAPI
@@ -100,6 +103,7 @@ Set these environment variables. `backend/.env.example` lists them:
 | `FILE_ZONE`, `CDN_KEY`, `CDN_HOST` | Storage settings for file uploads |
 | `FRONTEND_URL`                 | Frontend URL for OAuth2 redirects (default `http://localhost:3000`) |
 | `ADMIN_EMAIL`                  | The account with this email gets admin access |
+| `CORS_ALLOWED_ORIGINS`         | Sites allowed to call the API, comma-separated (default: `FRONTEND_URL`) |
 | `SEED_DATA`                    | Load the starter catalog into an empty database (default `true`) |
 | `EMAIL_VERIFICATION`           | Require an email code on sign-up (default `true`; set `false` if no mail server) |
 
@@ -114,7 +118,7 @@ The API runs at `http://localhost:8080`. Swagger UI is at `http://localhost:8080
 
 #### Admin access
 
-Set `ADMIN_EMAIL` to your email, then sign up with that email (or restart the backend if the account already exists). Your account page will then show **Manage store**, which opens the admin panel at `/admin`.
+Set `ADMIN_EMAIL` to your email, then sign up with that email (or restart the backend if the account already exists). Your account page will then show **Manage store**, which opens the admin panel at `/admin`. The admin panel has a sales dashboard, an **Orders** page for updating order status, and pages for products and categories.
 
 > Without `REACT_APP_STRIPE_KEY` the card option is turned off at checkout and customers can still pay with cash on delivery.
 

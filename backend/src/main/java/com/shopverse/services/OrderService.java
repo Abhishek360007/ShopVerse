@@ -66,7 +66,9 @@ public class OrderService {
                     .product(product)
                     .productVariantId(itemRequest.getProductVariantId())
                     .quantity(itemRequest.getQuantity())
+                    .itemPrice(product.getPrice().doubleValue())
                     .build());
+            OrderStock.take(product, itemRequest.getProductVariantId(), itemRequest.getQuantity());
         }
 
         Calendar delivery = Calendar.getInstance();
@@ -164,17 +166,19 @@ public class OrderService {
         }).toList();
     }
 
+    @Transactional
     public void cancelOrder(UUID id, Principal principal) {
         User user = (User) userDetailsService.loadUserByUsername(principal.getName());
-        Order order = orderRepository.findById(id).get();
-        if(null != order && order.getUser().getId().equals(user.getId())){
-            order.setOrderStatus(OrderStatus.CANCELLED);
-            //logic to refund amount
-            orderRepository.save(order);
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+        if (!order.getUser().getId().equals(user.getId())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found");
         }
-        else{
-            new RuntimeException("Invalid request");
+        if (!OrderStatusRules.customerCanCancel(order.getOrderStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This order has already shipped and can't be cancelled");
         }
-
+        order.setOrderStatus(OrderStatus.CANCELLED);
+        OrderStock.restore(order);
+        orderRepository.save(order);
     }
 }
