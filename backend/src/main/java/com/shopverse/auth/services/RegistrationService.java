@@ -6,6 +6,7 @@ import com.shopverse.auth.entities.User;
 import com.shopverse.auth.helper.VerificationCodeGenerator;
 import com.shopverse.auth.repositories.UserDetailRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ServerErrorException;
@@ -25,6 +26,10 @@ public class RegistrationService {
     @Autowired
     private EmailService emailService;
 
+    /** When false, accounts are activated immediately (useful when no mail server is configured). */
+    @Value("${app.auth.email-verification:true}")
+    private boolean emailVerification;
+
     public RegistrationResponse createUser(RegistrationRequest request) {
 
         User existing = userDetailRepository.findByEmail(request.getEmail());
@@ -42,21 +47,24 @@ public class RegistrationService {
             user.setFirstName(request.getFirstName());
             user.setLastName(request.getLastName());
             user.setEmail(request.getEmail());
-            user.setEnabled(false);
+            user.setPhoneNumber(request.getPhoneNumber());
+            user.setEnabled(!emailVerification);
             user.setPassword(passwordEncoder.encode(request.getPassword()));
             user.setProvider("manual");
 
             String code = VerificationCodeGenerator.generateCode();
 
             user.setVerificationCode(code);
-            user.setAuthorities(authorityService.getUserAuthority());
+            user.setAuthorities(authorityService.getAuthoritiesFor(request.getEmail()));
             userDetailRepository.save(user);
-            emailService.sendMail(user);
-
+            if (emailVerification) {
+                emailService.sendMail(user);
+            }
 
             return RegistrationResponse.builder()
                     .code(200)
                     .message("User created!")
+                    .verificationRequired(emailVerification)
                     .build();
 
 

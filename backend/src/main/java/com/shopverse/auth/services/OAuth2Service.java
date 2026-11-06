@@ -29,7 +29,7 @@ public class OAuth2Service {
                 .email(email)
                 .provider(provider)
                 .enabled(true)
-                .authorities(authorityService.getUserAuthority())
+                .authorities(authorityService.getAuthoritiesFor(email))
                 .build();
         return userDetailRepository.save(user);
     }

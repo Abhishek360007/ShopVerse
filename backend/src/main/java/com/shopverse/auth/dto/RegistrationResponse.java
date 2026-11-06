@@ -13,5 +13,6 @@ public class RegistrationResponse {
 
     private int code;
     private String message;
+    private boolean verificationRequired;
 
 }

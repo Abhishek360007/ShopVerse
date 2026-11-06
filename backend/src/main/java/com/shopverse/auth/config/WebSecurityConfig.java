@@ -40,6 +40,12 @@ public class WebSecurityConfig {
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
                 .requestMatchers(HttpMethod.GET,"/api/products","/api/category").permitAll()
                         .requestMatchers("/oauth2/success").permitAll()
+                // Let error responses (400/404/500) through instead of redirecting to the login page
+                .requestMatchers("/error").permitAll()
+                // Catalog changes and file uploads are for the store admin only
+                .requestMatchers(HttpMethod.POST, "/api/products/**", "/api/category/**", "/api/file/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/products/**", "/api/category/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/products/**", "/api/category/**").hasAuthority("ADMIN")
                 .anyRequest().authenticated())
                 .oauth2Login((oauth2login)-> oauth2login.defaultSuccessUrl("/oauth2/success").loginPage("/oauth2/authorization/google"))
                 //.exceptionHandling((exception)-> exception.authenticationEntryPoint(new RESTAuthenticationEntryPoint()))
@@ -54,8 +60,7 @@ public class WebSecurityConfig {
 
     @Bean
     public AuthenticationManager authenticationManager(){
-        DaoAuthenticationProvider daoAuthenticationProvider= new DaoAuthenticationProvider();
-        daoAuthenticationProvider.setUserDetailsService(userDetailsService);
+        DaoAuthenticationProvider daoAuthenticationProvider= new DaoAuthenticationProvider(userDetailsService);
         daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
 
         return new ProviderManager(daoAuthenticationProvider);

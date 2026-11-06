@@ -1,5 +1,7 @@
 package com.shopverse.services;
 
+import java.math.BigDecimal;
+import com.shopverse.dto.OrderItemRequest;
 import com.stripe.model.PaymentIntent;
 import com.shopverse.auth.dto.OrderResponse;
 import com.shopverse.auth.entities.User;
@@ -12,13 +14,17 @@ import jakarta.transaction.Transactional;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.security.Principal;
 import java.util.*;
 
 @Service
 public class OrderService {
+
+    private static final int DELIVERY_DAYS = 5;
 
     @Autowired
     private UserDetailsService userDetailsService;
@@ -36,33 +42,47 @@ public class OrderService {
     @Transactional
     public OrderResponse createOrder(OrderRequest orderRequest, Principal principal) throws Exception {
         User user = (User) userDetailsService.loadUserByUsername(principal.getName());
-        Address address = user.getAddressList().stream().filter(address1 -> orderRequest.getAddressId().equals(address1.getId())).findFirst().orElseThrow(BadRequestException::new);
+        if (orderRequest.getAddressId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Please add a delivery address");
+        }
+        Address address = user.getAddressList().stream().filter(address1 -> orderRequest.getAddressId().equals(address1.getId())).findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Delivery address not found"));
+
+        if (orderRequest.getOrderItemRequests() == null || orderRequest.getOrderItemRequests().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Your cart is empty");
+        }
+
+        // Price every line from the catalog; never trust amounts sent by the client
+        List<OrderItem> orderItems = new ArrayList<>();
+        BigDecimal total = BigDecimal.ZERO;
+        for (OrderItemRequest itemRequest : orderRequest.getOrderItemRequests()) {
+            Product product = productService.fetchProductById(itemRequest.getProductId());
+            try {
+                total = total.add(OrderPricing.lineTotal(product, itemRequest.getProductVariantId(), itemRequest.getQuantity()));
+            } catch (IllegalArgumentException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+            }
+            orderItems.add(OrderItem.builder()
+                    .product(product)
+                    .productVariantId(itemRequest.getProductVariantId())
+                    .quantity(itemRequest.getQuantity())
+                    .build());
+        }
+
+        Calendar delivery = Calendar.getInstance();
+        delivery.add(Calendar.DAY_OF_MONTH, DELIVERY_DAYS);
 
         Order order= Order.builder()
                 .user(user)
                 .address(address)
-                .totalAmount(orderRequest.getTotalAmount())
-                .orderDate(orderRequest.getOrderDate())
-                .discount(orderRequest.getDiscount())
-                .expectedDeliveryDate(orderRequest.getExpectedDeliveryDate())
-                .paymentMethod(orderRequest.getPaymentMethod())
+                .totalAmount(total.doubleValue())
+                .orderDate(new Date())
+                .discount(0.0)
+                .expectedDeliveryDate(delivery.getTime())
+                .paymentMethod("CARD".equals(orderRequest.getPaymentMethod()) ? "CARD" : "COD")
                 .orderStatus(OrderStatus.PENDING)
                 .build();
-        List<OrderItem> orderItems = orderRequest.getOrderItemRequests().stream().map(orderItemRequest -> {
-            try {
-                Product product= productService.fetchProductById(orderItemRequest.getProductId());
-                OrderItem orderItem= OrderItem.builder()
-                        .product(product)
-                        .productVariantId(orderItemRequest.getProductVariantId())
-                        .quantity(orderItemRequest.getQuantity())
-                        .order(order)
-                        .build();
-                return orderItem;
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }).toList();
-
+        orderItems.forEach(orderItem -> orderItem.setOrder(order));
         order.setOrderItemList(orderItems);
         Payment payment=new Payment();
         payment.setPaymentStatus(PaymentStatus.PENDING);
@@ -75,10 +95,10 @@ public class OrderService {
 
 
         OrderResponse orderResponse = OrderResponse.builder()
-                .paymentMethod(orderRequest.getPaymentMethod())
+                .paymentMethod(savedOrder.getPaymentMethod())
                 .orderId(savedOrder.getId())
                 .build();
-        if(Objects.equals(orderRequest.getPaymentMethod(), "CARD")){
+        if(Objects.equals(savedOrder.getPaymentMethod(), "CARD")){
             orderResponse.setCredentials(paymentIntentService.createPaymentIntent(order));
         }
 

@@ -1,5 +1,6 @@
 package com.shopverse.services;
 
+import org.apache.commons.lang3.StringUtils;
 import com.shopverse.dto.ProductDto;
 import com.shopverse.entities.*;
 import com.shopverse.exceptions.ResourceNotFoundEx;
@@ -34,14 +35,24 @@ public class ProductServiceImpl implements ProductService{
 
     @Override
     public List<ProductDto> getAllProducts(UUID categoryId, UUID typeId) {
+        return getAllProducts(categoryId, typeId, null);
+    }
 
-        Specification<Product> productSpecification= Specification.where(null);
+    @Override
+    public List<ProductDto> getAllProducts(UUID categoryId, UUID typeId, String search) {
+
+        // Start from an always-true condition (Spring Data 4 rejects Specification.where(null))
+        Specification<Product> productSpecification = (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
 
         if(null != categoryId){
             productSpecification = productSpecification.and(ProductSpecification.hasCategoryId(categoryId));
         }
         if(null != typeId){
             productSpecification = productSpecification.and(ProductSpecification.hasCategoryTypeId(typeId));
+        }
+
+        if(StringUtils.isNotBlank(search)){
+            productSpecification = productSpecification.and(ProductSpecification.matchesSearch(search));
         }
 
         List<Product> products = productRepository.findAll(productSpecification);

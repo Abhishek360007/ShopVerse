@@ -83,8 +83,17 @@ public class ProductMapper {
         }).collect(Collectors.toList());
     }
 
+    /** List view: includes variants and category ids so the storefront can add to cart from a card. */
     public List<ProductDto> getProductDtos(List<Product> products) {
-        return products.stream().map(this::mapProductToDto).toList();
+        return products.stream().map(product -> {
+            ProductDto dto = mapProductToDto(product);
+            dto.setCategoryId(product.getCategory() != null ? product.getCategory().getId() : null);
+            dto.setCategoryTypeId(product.getCategoryType() != null ? product.getCategoryType().getId() : null);
+            if (product.getProductVariants() != null) {
+                dto.setVariants(mapProductVariantListToDto(product.getProductVariants()));
+            }
+            return dto;
+        }).toList();
     }
 
     public ProductDto mapProductToDto(Product product) {
@@ -102,7 +111,11 @@ public class ProductMapper {
     }
 
     private String getProductThumbnail(List<Resources> resources) {
-        return resources.stream().filter(Resources::getIsPrimary).findFirst().orElse(null).getUrl();
+        if (resources == null || resources.isEmpty()) {
+            return null;
+        }
+        return resources.stream().filter(r -> Boolean.TRUE.equals(r.getIsPrimary())).findFirst()
+                .orElse(resources.get(0)).getUrl();
     }
 
     public List<ProductVariantDto> mapProductVariantListToDto(List<ProductVariant> productVariants) {

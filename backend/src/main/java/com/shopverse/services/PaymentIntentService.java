@@ -19,10 +19,10 @@ public class PaymentIntentService {
         Map<String, String> metaData = new HashMap<>();
         metaData.put("orderId",order.getId().toString());
         PaymentIntentCreateParams paymentIntentCreateParams= PaymentIntentCreateParams.builder()
-                .setAmount((long) (order.getTotalAmount() * 100 * 80)) // USD to INR
-                .setCurrency("inr")//INR currency
+                .setAmount(Math.round(order.getTotalAmount() * 100)) // rupees to paise
+                .setCurrency("inr")
                 .putAllMetadata(metaData)
-                .setDescription("Test Payment Project -1")
+                .setDescription("ShopVerse order " + order.getId())
                 .setAutomaticPaymentMethods(
                         PaymentIntentCreateParams.AutomaticPaymentMethods.builder().setEnabled(true).build()
                 )

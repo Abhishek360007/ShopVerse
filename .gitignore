@@ -5,3 +5,10 @@
 *.iml
 .DS_Store
 node_modules/
+
+# JVM crash logs
+hs_err_pid*.log
+replay_pid*.log
+
+# Local downloads (e.g. JDK archives)
+*.zip
