@@ -9,8 +9,13 @@ const OAuth2LoginCallback = () => {
   const dispatch = useDispatch();
 
   useEffect(()=>{
-    const params = new URLSearchParams(window.location.search);
+    // The server puts the token in the URL fragment (#token=...), which is never sent to
+    // a server. Read it, then remove it from the address bar and browser history.
+    const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
     const token = params.get("token");
+    if (window.location.hash) {
+        window.history.replaceState(null, "", window.location.pathname);
+    }
 
     if(token){
         saveToken(token);

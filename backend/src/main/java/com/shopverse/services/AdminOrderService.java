@@ -1,5 +1,8 @@
 package com.shopverse.services;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 import com.shopverse.auth.entities.User;
 import com.shopverse.dto.AdminOrderDto;
 import com.shopverse.dto.AdminOrderItemDto;
@@ -34,9 +37,11 @@ import java.util.stream.Stream;
 public class AdminOrderService {
 
     private final OrderRepository orderRepository;
+    private final StockService stockService;
 
-    public AdminOrderService(OrderRepository orderRepository) {
+    public AdminOrderService(OrderRepository orderRepository, StockService stockService) {
         this.orderRepository = orderRepository;
+        this.stockService = stockService;
     }
 
     @Transactional(readOnly = true)
@@ -59,7 +64,10 @@ public class AdminOrderService {
         if (newStatus == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Choose an order status");
         }
-        Order order = find(id);
+        // Row lock: a status change can move stock (cancel) or money (COD delivered), so two
+        // changes to one order, or an admin cancel racing the customer's cancel, run one at a time.
+        Order order = orderRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
         OrderStatus current = order.getOrderStatus();
         if (!OrderStatusRules.canChange(current, newStatus)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -72,7 +80,7 @@ public class AdminOrderService {
             order.changeStatus(newStatus, note == null || note.isBlank() ? null : note.trim());
             Payment payment = order.getPayment();
             if (newStatus == OrderStatus.CANCELLED) {
-                OrderStock.restore(order);
+                stockService.restore(order);
             }
             // Cash on delivery is paid when the order is handed over
             if (newStatus == OrderStatus.DELIVERED && payment != null && "COD".equals(order.getPaymentMethod())) {
@@ -87,7 +95,7 @@ public class AdminOrderService {
     public OrderStatsDto stats() {
         long total = orderRepository.count();
         long cancelled = orderRepository.countByOrderStatus(OrderStatus.CANCELLED);
-        double revenue = Objects.requireNonNullElse(orderRepository.sumRevenue(), 0.0);
+        BigDecimal revenue = Objects.requireNonNullElse(orderRepository.sumRevenue(), BigDecimal.ZERO);
         long counted = total - cancelled;
         return OrderStatsDto.builder()
                 .totalOrders(total)
@@ -98,8 +106,8 @@ public class AdminOrderService {
                         + orderRepository.countByOrderStatus(OrderStatus.OUT_FOR_DELIVERY))
                 .delivered(orderRepository.countByOrderStatus(OrderStatus.DELIVERED))
                 .cancelled(cancelled)
-                .revenue(round(revenue))
-                .averageOrderValue(counted > 0 ? round(revenue / counted) : 0)
+                .revenue(money(revenue))
+                .averageOrderValue(counted > 0 ? money(revenue.divide(BigDecimal.valueOf(counted), 2, RoundingMode.HALF_UP)) : 0)
                 .build();
     }
 
@@ -138,8 +146,8 @@ public class AdminOrderService {
 
     private AdminOrderItemDto toItemDto(OrderItem item) {
         Product product = item.getProduct();
-        double unitPrice = item.getItemPrice() != null ? item.getItemPrice()
-                : product != null && product.getPrice() != null ? product.getPrice().doubleValue() : 0;
+        BigDecimal unitPrice = item.getItemPrice() != null ? item.getItemPrice()
+                : product != null && product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO;
         int quantity = item.getQuantity() == null ? 0 : item.getQuantity();
         var variant = OrderStock.variantOf(product, item.getProductVariantId());
         return AdminOrderItemDto.builder()
@@ -151,7 +159,7 @@ public class AdminOrderService {
                 .color(variant.map(v -> v.getColor()).orElse(null))
                 .quantity(quantity)
                 .unitPrice(unitPrice)
-                .lineTotal(round(unitPrice * quantity))
+                .lineTotal(unitPrice.multiply(BigDecimal.valueOf(quantity)).setScale(2, RoundingMode.HALF_UP))
                 .build();
     }
 
@@ -163,7 +171,8 @@ public class AdminOrderService {
         return status == null ? "unknown" : status.name().replace('_', ' ').toLowerCase();
     }
 
-    private static double round(double value) {
-        return Math.round(value * 100.0) / 100.0;
+    /** Money to two decimals, as a plain number for the dashboard summary. */
+    private static double money(BigDecimal value) {
+        return value.setScale(2, RoundingMode.HALF_UP).doubleValue();
     }
 }

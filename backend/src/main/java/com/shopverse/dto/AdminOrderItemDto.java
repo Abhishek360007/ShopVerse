@@ -1,5 +1,6 @@
 package com.shopverse.dto;
 
+import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,6 +17,6 @@ public class AdminOrderItemDto {
     private String size;
     private String color;
     private Integer quantity;
-    private Double unitPrice;
-    private Double lineTotal;
+    private BigDecimal unitPrice;
+    private BigDecimal lineTotal;
 }

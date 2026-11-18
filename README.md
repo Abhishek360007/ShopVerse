@@ -18,7 +18,9 @@ ShopVerse is a full-stack e-commerce web application built with **React.js** on 
 - 🛍️ Cart that merges repeat items and respects available stock
 - 🔐 Sign-up (optional email verification), login, JWT authentication and Google OAuth2 sign-in
 - 💳 Checkout with saved addresses, Stripe card payments or cash on delivery
-- 🧾 Order totals calculated on the server from catalog prices
+- 🧾 Order totals calculated on the server from catalog prices, stored as exact decimals (`BigDecimal` / `NUMERIC(12,2)`)
+- 📦 Race-safe stock: each order takes stock with one atomic database update, so two customers can never buy the same last item
+- 🔔 Stripe webhook records card payments exactly once, even if the customer closes the tab after paying
 - ❤️ Wishlist: save products, move them to the cart, kept on your account across devices (guest items merge on sign-in)
 - 🚚 Order tracking: Placed → Confirmed → Packed → Shipped → Out for delivery → Delivered, with a timestamp for each step, courier tracking number and estimated delivery
 - 📜 Order history with cancellation (before shipping) and account settings
@@ -107,6 +109,7 @@ Set these environment variables. `backend/.env.example` lists them:
 | `GOOGLE_OAUTH2_CLIENT_ID`      | Google OAuth2 client ID              |
 | `GOOGLE_OAUTH2_CLIENT_SECRET`  | Google OAuth2 client secret          |
 | `STRIPE_SECRET`                | Stripe secret key                    |
+| `STRIPE_WEBHOOK_SECRET`        | Optional: signing secret (`whsec_...`) of a Stripe webhook to `/api/payments/stripe/webhook` with the event `payment_intent.succeeded`. Records card payments even if the customer closes the tab before returning |
 | `FILE_ZONE`, `CDN_KEY`, `CDN_HOST` | Storage settings for file uploads |
 | `FRONTEND_URL`                 | Frontend URL for OAuth2 redirects (default `http://localhost:3000`) |
 | `ADMIN_EMAIL`                  | The account with this email gets admin access |
@@ -166,7 +169,7 @@ The database runs on [Neon](https://neon.tech) (free PostgreSQL, no expiry) and 
 
 The tables and starter catalog are created automatically on first start. On Render's free plan the API sleeps after 15 minutes without visitors, so the first page load after a break can take about a minute.
 
-Card payments, Google sign-in, emails and image uploads are off by default. To turn one on, replace its `not-configured` values in **shopverse-api → Environment** (for Google sign-in, also set `REACT_APP_GOOGLE_LOGIN=true` on **shopverse-web**; for card payments, set `REACT_APP_STRIPE_KEY`).
+Card payments, Google sign-in, emails and image uploads are off by default. To turn one on, replace its `not-configured` values in **shopverse-api → Environment** (for Google sign-in, also set `REACT_APP_GOOGLE_LOGIN=true` on **shopverse-web**; for card payments, set `REACT_APP_STRIPE_KEY`, and add a Stripe webhook to `https://<shopverse-api>/api/payments/stripe/webhook` for `payment_intent.succeeded` with its secret in `STRIPE_WEBHOOK_SECRET`).
 
 ## 🧪 Testing
 

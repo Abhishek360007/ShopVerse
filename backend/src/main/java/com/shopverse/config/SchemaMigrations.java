@@ -30,6 +30,37 @@ public class SchemaMigrations implements CommandLineRunner {
     @Override
     public void run(String... args) {
         updateOrderStatusConstraint();
+        moneyColumnsToNumeric();
+    }
+
+    /** Money columns that used to be Double (floating point) and are now BigDecimal. */
+    private static final String[][] MONEY_COLUMNS = {
+            {"orders", "total_amount"}, {"orders", "discount"}, {"order_items", "item_price"}, {"payment", "amount"}};
+
+    /**
+     * Money used to be stored as {@code double precision}, which can't hold most decimal
+     * amounts exactly (0.1 + 0.2 != 0.3). The entities now use {@code BigDecimal}; Hibernate
+     * creates {@code NUMERIC(12,2)} on a new database but never changes an existing column's
+     * type, so existing databases are converted here, once, rounding to paise. A failure is
+     * logged rather than stopping the app: reading a double column into BigDecimal still works.
+     */
+    private void moneyColumnsToNumeric() {
+        for (String[] column : MONEY_COLUMNS) {
+            String table = column[0];
+            String name = column[1];
+            try {
+                String type = jdbc.query(
+                        "SELECT data_type FROM information_schema.columns WHERE table_name = ? AND column_name = ?",
+                        rs -> rs.next() ? rs.getString(1) : null, table, name);
+                if (type != null && type.toLowerCase().startsWith("double")) {
+                    jdbc.execute("ALTER TABLE " + table + " ALTER COLUMN " + name
+                            + " TYPE NUMERIC(12,2) USING ROUND(" + name + "::numeric, 2)");
+                    log.info("Converted {}.{} from {} to NUMERIC(12,2)", table, name, type);
+                }
+            } catch (RuntimeException e) {
+                log.warn("Could not convert {}.{} to NUMERIC(12,2): {}", table, name, e.getMessage());
+            }
+        }
     }
 
     /**

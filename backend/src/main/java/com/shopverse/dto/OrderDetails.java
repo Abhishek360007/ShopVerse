@@ -1,5 +1,6 @@
 package com.shopverse.dto;
 
+import java.math.BigDecimal;
 import com.shopverse.entities.Address;
 import com.shopverse.entities.OrderStatus;
 import lombok.AllArgsConstructor;
@@ -20,7 +21,7 @@ public class OrderDetails {
     private UUID id;
     private Date orderDate;
     private Address address;
-    private Double totalAmount;
+    private BigDecimal totalAmount;
     private OrderStatus orderStatus;
     private String shipmentNumber;
     private Date expectedDeliveryDate;

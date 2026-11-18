@@ -1,5 +1,6 @@
 package com.shopverse.dto;
 
+import java.math.BigDecimal;
 import com.shopverse.entities.OrderStatus;
 import com.shopverse.entities.PaymentStatus;
 import lombok.AllArgsConstructor;
@@ -25,7 +26,7 @@ public class AdminOrderDto {
     private Set<OrderStatus> nextStatuses;
     private String paymentMethod;
     private PaymentStatus paymentStatus;
-    private Double totalAmount;
+    private BigDecimal totalAmount;
     private Integer itemCount;
     private String customerName;
     private String customerEmail;

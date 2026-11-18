@@ -1,5 +1,6 @@
 package com.shopverse.entities;
 
+import java.math.BigDecimal;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -34,5 +35,6 @@ public class OrderItem {
     @Column(nullable = false)
     private Integer quantity;
 
-    private Double itemPrice;
+    @Column(precision = 12, scale = 2)
+    private BigDecimal itemPrice;
 }

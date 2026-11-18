@@ -41,6 +41,8 @@ services:
       # Optional integrations: replace these in the Render dashboard when you set them up
       - key: STRIPE_SECRET
         value: not-configured
+      - key: STRIPE_WEBHOOK_SECRET
+        value: not-configured   # whsec_... from the Stripe webhook for /api/payments/stripe/webhook
       - key: MAIL_USERNAME
         value: not-configured
       - key: MAIL_PASSWORD
