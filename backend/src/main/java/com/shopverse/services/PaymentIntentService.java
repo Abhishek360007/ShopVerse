@@ -19,7 +19,7 @@ public class PaymentIntentService {
         Map<String, String> metaData = new HashMap<>();
         metaData.put("orderId",order.getId().toString());
         PaymentIntentCreateParams paymentIntentCreateParams= PaymentIntentCreateParams.builder()
-                .setAmount(Math.round(order.getTotalAmount() * 100)) // rupees to paise
+                .setAmount(order.getTotalAmount().movePointRight(2).setScale(0, java.math.RoundingMode.HALF_UP).longValueExact()) // rupees to paise, exactly
                 .setCurrency("inr")
                 .putAllMetadata(metaData)
                 .setDescription("ShopVerse order " + order.getId())

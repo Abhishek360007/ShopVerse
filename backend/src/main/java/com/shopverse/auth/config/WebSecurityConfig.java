@@ -42,6 +42,8 @@ public class WebSecurityConfig {
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
                 .requestMatchers(HttpMethod.GET,"/api/products","/api/category","/api/ping").permitAll()
                         .requestMatchers("/oauth2/success").permitAll()
+                // Stripe can't log in; the webhook is authenticated by its signature instead
+                .requestMatchers(HttpMethod.POST, "/api/payments/stripe/webhook").permitAll()
                 // Let error responses (400/404/500) through instead of redirecting to the login page
                 .requestMatchers("/error").permitAll()
                 // Order management is for the store admin only

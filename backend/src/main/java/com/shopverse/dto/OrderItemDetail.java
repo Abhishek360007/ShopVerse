@@ -1,5 +1,6 @@
 package com.shopverse.dto;
 
+import java.math.BigDecimal;
 import com.shopverse.entities.Product;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,5 +19,5 @@ public class OrderItemDetail {
     private Product product;
     private UUID productVariantId;
     private Integer quantity;
-    private Double itemPrice;
+    private BigDecimal itemPrice;
 }

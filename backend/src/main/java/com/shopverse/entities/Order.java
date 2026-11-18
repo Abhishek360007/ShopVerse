@@ -1,5 +1,6 @@
 package com.shopverse.entities;
 
+import java.math.BigDecimal;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.shopverse.auth.entities.User;
 import jakarta.persistence.*;
@@ -35,8 +36,8 @@ public class Order {
     @JsonIgnore
     private Address address;
 
-    @Column(nullable = false)
-    private Double totalAmount;
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal totalAmount;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -56,7 +57,8 @@ public class Order {
     @ToString.Exclude
     private List<OrderItem> orderItemList;
 
-    private Double discount;
+    @Column(precision = 12, scale = 2)
+    private BigDecimal discount;
 
     @OneToOne(fetch = FetchType.LAZY,mappedBy = "order",cascade = CascadeType.ALL)
     @ToString.Exclude

@@ -1,7 +1,6 @@
 package com.shopverse.services;
 
 import com.shopverse.entities.Order;
-import com.shopverse.entities.OrderItem;
 import com.shopverse.entities.OrderStatus;
 import com.shopverse.entities.Product;
 import com.shopverse.entities.ProductVariant;
@@ -63,18 +62,14 @@ class OrderStatusRulesTest {
     }
 
     @Test
-    void stockIsTakenAndRestored() {
+    void findsTheVariantAnOrderLineRefersTo() {
         UUID variantId = UUID.randomUUID();
         ProductVariant variant = ProductVariant.builder().id(variantId).stockQuantity(10).build();
         Product product = Product.builder().productVariants(List.of(variant)).build();
 
-        OrderStock.take(product, variantId, 3);
-        assertEquals(7, variant.getStockQuantity());
-
-        Order order = Order.builder().orderStatus(OrderStatus.CANCELLED)
-                .orderItemList(List.of(OrderItem.builder().product(product).productVariantId(variantId).quantity(3).build()))
-                .build();
-        OrderStock.restore(order);
-        assertEquals(10, variant.getStockQuantity());
+        assertSame(variant, OrderStock.variantOf(product, variantId).orElseThrow());
+        assertTrue(OrderStock.variantOf(product, UUID.randomUUID()).isEmpty());
+        assertTrue(OrderStock.variantOf(null, variantId).isEmpty());
+        // Taking and restoring stock is tested against a real database in StockAndOrderQueriesTest.
     }
 }

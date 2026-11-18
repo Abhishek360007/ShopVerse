@@ -11,8 +11,7 @@ import com.shopverse.dto.OrderRequest;
 import com.shopverse.dto.StatusEventDto;
 import com.shopverse.entities.*;
 import com.shopverse.repositories.OrderRepository;
-import jakarta.transaction.Transactional;
-import org.apache.coyote.BadRequestException;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.http.HttpStatus;
@@ -39,8 +38,20 @@ public class OrderService {
     @Autowired
     PaymentIntentService paymentIntentService;
 
+    @Autowired
+    StockService stockService;
 
-    @Transactional
+    @Autowired
+    PaymentConfirmationService paymentConfirmationService;
+
+
+    /**
+     * Places an order. {@code rollbackFor = Exception.class}: creating the Stripe
+     * PaymentIntent can throw the checked {@code StripeException}, and by default a
+     * transaction commits on checked exceptions, which would keep an unpayable order and
+     * the stock it took. Now any failure undoes the order and its stock together.
+     */
+    @Transactional(rollbackFor = Exception.class)
     public OrderResponse createOrder(OrderRequest orderRequest, Principal principal) throws Exception {
         User user = (User) userDetailsService.loadUserByUsername(principal.getName());
         if (orderRequest.getAddressId() == null) {
@@ -67,9 +78,10 @@ public class OrderService {
                     .product(product)
                     .productVariantId(itemRequest.getProductVariantId())
                     .quantity(itemRequest.getQuantity())
-                    .itemPrice(product.getPrice().doubleValue())
+                    .itemPrice(product.getPrice())
                     .build());
-            OrderStock.take(product, itemRequest.getProductVariantId(), itemRequest.getQuantity());
+            // Atomic: fails with 409 if another order took the last units meanwhile
+            stockService.take(product, itemRequest.getProductVariantId(), itemRequest.getQuantity());
         }
 
         Calendar delivery = Calendar.getInstance();
@@ -78,9 +90,9 @@ public class OrderService {
         Order order= Order.builder()
                 .user(user)
                 .address(address)
-                .totalAmount(total.doubleValue())
+                .totalAmount(total)
                 .orderDate(new Date())
-                .discount(0.0)
+                .discount(BigDecimal.ZERO)
                 .expectedDeliveryDate(delivery.getTime())
                 .paymentMethod("CARD".equals(orderRequest.getPaymentMethod()) ? "CARD" : "COD")
                 .orderStatus(OrderStatus.PENDING)
@@ -110,33 +122,23 @@ public class OrderService {
 
     }
 
+    /**
+     * The browser reporting that Stripe confirmed the card. The intent is fetched from
+     * Stripe here (outside any transaction) so a forged id or status can't mark an order
+     * paid; recording it is shared with the webhook and happens at most once.
+     */
     public Map<String,String> updateStatus(String paymentIntentId, String status) {
-
-        try{
-            PaymentIntent paymentIntent= PaymentIntent.retrieve(paymentIntentId);
-            if (paymentIntent != null && paymentIntent.getStatus().equals("succeeded")) {
-               String orderId = paymentIntent.getMetadata().get("orderId") ;
-               Order order= orderRepository.findById(UUID.fromString(orderId)).orElseThrow(BadRequestException::new);
-               Payment payment = order.getPayment();
-               payment.setPaymentStatus(PaymentStatus.COMPLETED);
-                payment.setPaymentMethod(paymentIntent.getPaymentMethod());
-                order.setPaymentMethod(paymentIntent.getPaymentMethod());
-                if (order.getOrderStatus() == OrderStatus.PENDING) {
-                    order.changeStatus(OrderStatus.CONFIRMED, "Payment received");
-                }
-                order.setPayment(payment);
-                Order savedOrder = orderRepository.save(order);
-                Map<String,String> map = new HashMap<>();
-                map.put("orderId", String.valueOf(savedOrder.getId()));
-                return map;
-            }
-            else{
-                throw new IllegalArgumentException("PaymentIntent not found or missing metadata");
-            }
-        }
-        catch (Exception e){
+        PaymentIntent paymentIntent;
+        try {
+            paymentIntent = PaymentIntent.retrieve(paymentIntentId);
+        } catch (Exception e) {
             throw new IllegalArgumentException("PaymentIntent not found or missing metadata");
         }
+        UUID orderId = paymentConfirmationService.markPaid(paymentIntent)
+                .orElseThrow(() -> new IllegalArgumentException("PaymentIntent not found or missing metadata"));
+        Map<String,String> map = new HashMap<>();
+        map.put("orderId", String.valueOf(orderId));
+        return map;
     }
 
     @Transactional
@@ -192,7 +194,9 @@ public class OrderService {
     @Transactional
     public void cancelOrder(UUID id, Principal principal) {
         User user = (User) userDetailsService.loadUserByUsername(principal.getName());
-        Order order = orderRepository.findById(id)
+        // Row lock: two cancels at once would otherwise both pass the status check
+        // below and put the stock back twice.
+        Order order = orderRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
         if (!order.getUser().getId().equals(user.getId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found");
@@ -201,7 +205,7 @@ public class OrderService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This order has already shipped and can't be cancelled");
         }
         order.changeStatus(OrderStatus.CANCELLED, "Cancelled by you");
-        OrderStock.restore(order);
+        stockService.restore(order);
         orderRepository.save(order);
     }
 }

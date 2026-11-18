@@ -1,5 +1,6 @@
 package com.shopverse.entities;
 
+import java.math.BigDecimal;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -30,8 +31,8 @@ public class Payment {
     @Column(nullable = false)
     private Date paymentDate;
 
-    @Column(nullable = false)
-    private Double amount;
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal amount;
 
     @Column(nullable = false)
     private String paymentMethod;

@@ -41,7 +41,9 @@ public class OAuth2Controller {
 
         String token = jwtTokenHelper.generateToken(user.getUsername());
 
-        response.sendRedirect(Urls.withScheme(frontendUrl) + "/oauth2/callback?token=" + token);
+        // The token goes in the URL fragment (#), which browsers never send to servers, so it
+        // can't end up in server or proxy logs or Referer headers the way a ?token= query would.
+        response.sendRedirect(Urls.withScheme(frontendUrl) + "/oauth2/callback#token=" + token);
 
     }
 }

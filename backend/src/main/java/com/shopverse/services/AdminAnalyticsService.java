@@ -9,108 +9,119 @@ import com.shopverse.dto.AnalyticsDto.Kpis;
 import com.shopverse.dto.AnalyticsDto.LowStock;
 import com.shopverse.dto.AnalyticsDto.MonthPoint;
 import com.shopverse.dto.AnalyticsDto.TopCustomer;
-import com.shopverse.entities.Order;
-import com.shopverse.entities.OrderItem;
 import com.shopverse.entities.OrderStatus;
 import com.shopverse.entities.Product;
 import com.shopverse.entities.Resources;
 import com.shopverse.repositories.OrderRepository;
+import com.shopverse.repositories.ProductRepository;
 import com.shopverse.repositories.ProductVariantRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
  * Sales, product and customer figures for the admin dashboard.
- * Computed in memory from the orders, which is plenty fast for a store of this size;
- * a larger store would move these to SQL aggregate queries.
+ *
+ * <p>Totals, best sellers and top customers are aggregated by the database ({@code SUM},
+ * {@code COUNT}, {@code GROUP BY}), so the work doesn't grow with the number of orders
+ * held in memory. Only the monthly chart reads individual rows, and only two columns
+ * (date and total) for the months it shows; they are grouped by month in Java because
+ * months are counted in the store's time zone. Money is summed as {@code BigDecimal}
+ * and rounded to two decimals at the end.
  */
 @Service
 public class AdminAnalyticsService {
 
     static final ZoneId STORE_ZONE = ZoneId.of("Asia/Kolkata");
+    private static final int TOP_N = 5;
 
     private final OrderRepository orderRepository;
     private final ProductVariantRepository variantRepository;
     private final UserDetailRepository userRepository;
+    private final ProductRepository productRepository;
 
     public AdminAnalyticsService(OrderRepository orderRepository, ProductVariantRepository variantRepository,
-                                 UserDetailRepository userRepository) {
+                                 UserDetailRepository userRepository, ProductRepository productRepository) {
         this.orderRepository = orderRepository;
         this.variantRepository = variantRepository;
         this.userRepository = userRepository;
+        this.productRepository = productRepository;
     }
 
     @Transactional(readOnly = true)
     public AnalyticsDto analytics(int months, int lowStockThreshold) {
-        List<Order> all = orderRepository.findAll();
-        List<Order> counted = all.stream().filter(o -> o.getOrderStatus() != OrderStatus.CANCELLED).toList();
         YearMonth thisMonth = YearMonth.now(STORE_ZONE);
+        int window = Math.min(Math.max(months, 1), 24);
+        // Read at least two months so this month can be compared with last month.
+        YearMonth firstMonth = thisMonth.minusMonths(Math.max(window, 2) - 1);
+        List<Object[]> recent = orderRepository.datedTotalsSince(startOf(firstMonth));
 
-        List<MonthPoint> monthly = monthly(counted, thisMonth, Math.min(Math.max(months, 1), 24));
+        List<MonthPoint> monthly = monthly(recent, thisMonth, window);
         List<LowStock> lowStock = lowStock(lowStockThreshold);
 
-        double revenue = counted.stream().mapToDouble(o -> nz(o.getTotalAmount())).sum();
-        double revenueThis = revenueIn(counted, thisMonth);
-        double revenueLast = revenueIn(counted, thisMonth.minusMonths(1));
-        Double change = revenueLast > 0 ? round((revenueThis - revenueLast) * 100 / revenueLast) : null;
-        long ordersThisMonth = counted.stream().filter(o -> thisMonth.equals(monthOf(o))).count();
-        long toShip = all.stream().filter(o -> o.getOrderStatus() == OrderStatus.PENDING
-                || o.getOrderStatus() == OrderStatus.CONFIRMED || o.getOrderStatus() == OrderStatus.PACKED).count();
+        BigDecimal revenue = orZero(orderRepository.sumRevenue());
+        long orders = orderRepository.countNotCancelled();
+        BigDecimal revenueThis = revenueIn(recent, thisMonth);
+        BigDecimal revenueLast = revenueIn(recent, thisMonth.minusMonths(1));
+        Double change = revenueLast.signum() > 0
+                ? money(revenueThis.subtract(revenueLast).multiply(BigDecimal.valueOf(100))
+                        .divide(revenueLast, 2, RoundingMode.HALF_UP))
+                : null;
+        long ordersThisMonth = recent.stream().filter(r -> thisMonth.equals(monthOf((Date) r[0]))).count();
+        long toShip = orderRepository.countByOrderStatusIn(
+                List.of(OrderStatus.PENDING, OrderStatus.CONFIRMED, OrderStatus.PACKED));
 
-        Kpis kpis = new Kpis(round(revenue), counted.size(), counted.isEmpty() ? 0 : round(revenue / counted.size()),
-                round(revenueThis), round(revenueLast), change, ordersThisMonth, toShip, lowStock.size());
+        Kpis kpis = new Kpis(money(revenue), orders,
+                orders == 0 ? 0 : money(revenue.divide(BigDecimal.valueOf(orders), 2, RoundingMode.HALF_UP)),
+                money(revenueThis), money(revenueLast), change, ordersThisMonth, toShip, lowStock.size());
 
-        return new AnalyticsDto(kpis, monthly, bestSellers(counted), lowStock.stream().limit(10).toList(),
-                customers(counted, thisMonth));
+        return new AnalyticsDto(kpis, monthly, bestSellers(), lowStock.stream().limit(10).toList(),
+                customers(thisMonth));
     }
 
-    static List<MonthPoint> monthly(List<Order> orders, YearMonth end, int months) {
-        Map<YearMonth, List<Order>> byMonth = orders.stream()
-                .filter(o -> o.getOrderDate() != null)
-                .collect(Collectors.groupingBy(AdminAnalyticsService::monthOf));
+    /** Revenue and order count per month, oldest first, including months with no orders. */
+    static List<MonthPoint> monthly(List<Object[]> datedTotals, YearMonth end, int months) {
+        Map<YearMonth, List<Object[]>> byMonth = datedTotals.stream()
+                .filter(r -> r[0] != null)
+                .collect(Collectors.groupingBy(r -> monthOf((Date) r[0])));
         List<MonthPoint> points = new ArrayList<>();
         for (int i = months - 1; i >= 0; i--) {
             YearMonth month = end.minusMonths(i);
-            List<Order> inMonth = byMonth.getOrDefault(month, List.of());
+            List<Object[]> inMonth = byMonth.getOrDefault(month, List.of());
             points.add(new MonthPoint(month.format(DateTimeFormatter.ofPattern("yyyy-MM")),
                     month.getMonth().getDisplayName(TextStyle.SHORT, Locale.ENGLISH) + " " + month.getYear(),
-                    round(inMonth.stream().mapToDouble(o -> nz(o.getTotalAmount())).sum()), inMonth.size()));
+                    money(sum(inMonth)), inMonth.size()));
         }
         return points;
     }
 
-    static List<BestSeller> bestSellers(List<Order> orders) {
-        Map<UUID, long[]> units = new LinkedHashMap<>();
-        Map<UUID, double[]> revenue = new HashMap<>();
-        Map<UUID, Product> products = new HashMap<>();
-        for (Order order : orders) {
-            if (order.getOrderItemList() == null) continue;
-            for (OrderItem item : order.getOrderItemList()) {
-                Product product = item.getProduct();
-                if (product == null || product.getId() == null) continue;
-                int qty = item.getQuantity() == null ? 0 : item.getQuantity();
-                double price = item.getItemPrice() != null ? item.getItemPrice()
-                        : product.getPrice() != null ? product.getPrice().doubleValue() : 0;
-                products.putIfAbsent(product.getId(), product);
-                units.computeIfAbsent(product.getId(), k -> new long[1])[0] += qty;
-                revenue.computeIfAbsent(product.getId(), k -> new double[1])[0] += price * qty;
-            }
-        }
-        return units.entrySet().stream()
-                .sorted((a, b) -> Long.compare(b.getValue()[0], a.getValue()[0]))
-                .limit(5)
-                .map(e -> {
-                    Product p = products.get(e.getKey());
-                    return new BestSeller(p.getId(), p.getName(), thumbnail(p), e.getValue()[0],
-                            round(revenue.get(e.getKey())[0]));
+    private List<BestSeller> bestSellers() {
+        List<Object[]> rows = orderRepository.bestSellers(PageRequest.of(0, TOP_N));
+        List<UUID> ids = rows.stream().map(r -> (UUID) r[0]).toList();
+        Map<UUID, Product> products = productRepository.findAllById(ids).stream()
+                .collect(Collectors.toMap(Product::getId, Function.identity()));
+        return bestSellers(rows, products);
+    }
+
+    /** Turns (product id, units, revenue) rows, already sorted by units, into dashboard entries. */
+    static List<BestSeller> bestSellers(List<Object[]> rows, Map<UUID, Product> products) {
+        return rows.stream()
+                .filter(r -> products.containsKey((UUID) r[0]))
+                .map(r -> {
+                    Product p = products.get((UUID) r[0]);
+                    return new BestSeller(p.getId(), p.getName(), thumbnail(p), ((Number) r[1]).longValue(),
+                            money(toBigDecimal(r[2])));
                 })
                 .toList();
     }
@@ -123,37 +134,41 @@ public class AdminAnalyticsService {
                 .toList();
     }
 
-    private CustomerStats customers(List<Order> orders, YearMonth thisMonth) {
-        Map<UUID, List<Order>> byCustomer = orders.stream()
-                .filter(o -> o.getUser() != null)
-                .collect(Collectors.groupingBy(o -> o.getUser().getId()));
-        long repeat = byCustomer.values().stream().filter(list -> list.size() > 1).count();
-
-        List<TopCustomer> top = byCustomer.values().stream()
-                .map(list -> {
-                    User user = list.get(0).getUser();
+    private CustomerStats customers(YearMonth thisMonth) {
+        List<Object[]> rows = orderRepository.topCustomers(PageRequest.of(0, TOP_N));
+        Map<UUID, User> users = userRepository.findByIdIn(rows.stream().map(r -> (UUID) r[0]).toList()).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+        List<TopCustomer> top = rows.stream()
+                .filter(r -> users.containsKey((UUID) r[0]))
+                .map(r -> {
+                    User user = users.get((UUID) r[0]);
                     String name = String.join(" ", Optional.ofNullable(user.getFirstName()).orElse(""),
                             Optional.ofNullable(user.getLastName()).orElse("")).trim();
-                    return new TopCustomer(name.isEmpty() ? user.getEmail() : name, user.getEmail(), list.size(),
-                            round(list.stream().mapToDouble(o -> nz(o.getTotalAmount())).sum()));
+                    return new TopCustomer(name.isEmpty() ? user.getEmail() : name, user.getEmail(),
+                            ((Number) r[1]).longValue(), money(toBigDecimal(r[2])));
                 })
-                .sorted(Comparator.comparingDouble(TopCustomer::spent).reversed())
-                .limit(5)
                 .toList();
 
-        Date monthStart = Date.from(thisMonth.atDay(1).atStartOfDay(STORE_ZONE).toInstant());
-        return new CustomerStats(userRepository.count(), userRepository.countByCreatedOnGreaterThanEqual(monthStart),
-                byCustomer.size(), repeat, top);
+        return new CustomerStats(userRepository.count(), userRepository.countByCreatedOnGreaterThanEqual(startOf(thisMonth)),
+                orderRepository.countPayingCustomers(), orderRepository.repeatCustomerIds().size(), top);
     }
 
-    private static double revenueIn(List<Order> orders, YearMonth month) {
-        return orders.stream().filter(o -> month.equals(monthOf(o))).mapToDouble(o -> nz(o.getTotalAmount())).sum();
+    private static BigDecimal revenueIn(List<Object[]> datedTotals, YearMonth month) {
+        return sum(datedTotals.stream().filter(r -> r[0] != null && month.equals(monthOf((Date) r[0]))).toList());
     }
 
-    static YearMonth monthOf(Order order) {
-        if (order.getOrderDate() == null) return null;
-        LocalDate date = order.getOrderDate().toInstant().atZone(STORE_ZONE).toLocalDate();
-        return YearMonth.from(date);
+    private static BigDecimal sum(List<Object[]> datedTotals) {
+        return datedTotals.stream().map(r -> toBigDecimal(r[1])).reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    static YearMonth monthOf(Date date) {
+        if (date == null) return null;
+        LocalDate day = date.toInstant().atZone(STORE_ZONE).toLocalDate();
+        return YearMonth.from(day);
+    }
+
+    private static Date startOf(YearMonth month) {
+        return Date.from(month.atDay(1).atStartOfDay(STORE_ZONE).toInstant());
     }
 
     private static String thumbnail(Product product) {
@@ -162,11 +177,18 @@ public class AdminAnalyticsService {
                 .map(Resources::getUrl).findFirst().orElse(null);
     }
 
-    private static double nz(Double value) {
-        return value == null ? 0 : value;
+    private static BigDecimal toBigDecimal(Object value) {
+        if (value == null) return BigDecimal.ZERO;
+        if (value instanceof BigDecimal b) return b;
+        return new BigDecimal(value.toString());
     }
 
-    private static double round(double value) {
-        return Math.round(value * 100.0) / 100.0;
+    private static BigDecimal orZero(BigDecimal value) {
+        return value == null ? BigDecimal.ZERO : value;
+    }
+
+    /** Money to two decimals, as a plain number for the dashboard. */
+    private static double money(BigDecimal value) {
+        return value.setScale(2, RoundingMode.HALF_UP).doubleValue();
     }
 }
